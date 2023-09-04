@@ -1,0 +1,84 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 3
+  },
+  "include": [
+  ],
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build using Ninja generator",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "environment": {
+        "VCPKG_ROOT" : "${sourceDir}/vcpkg"
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+           "type": "FILEPATH"
+        }
+      },
+      "hidden": true
+    },
+    {
+      "name": "windows-default",
+      "displayName": "Windows default Config",
+      "inherits": "default",
+      "generator": "Visual Studio 17 2022",
+      "hidden": true
+    },
+    {
+      "name": "windows-x64",
+      "displayName": "Windows X64",
+      "inherits": "windows-default",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
+      "name": "windows-debug-x64",
+      "displayName": "Windows debug x64 Config",
+      "inherits": "windows-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "DEBUG"
+        }
+      },
+      "hidden": false
+    },
+    {
+      "name": "windows-release-x64",
+      "displayName": "Windows release x64 Config",
+      "inherits": "windows-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "RELEASE"
+        }
+      },
+      "hidden": false
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "trading-platform-ninja-win-x64-debug",
+      "displayName": "trading platform windows x64 debug build",
+      "configurePreset": "windows-debug-x64",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-win-x64-releaes",
+      "displayName": "trading platform windows x64 release build",
+      "configurePreset": "windows-release-x64",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    }
+  ]
+}
