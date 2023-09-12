@@ -10,7 +10,7 @@
   "configurePresets": [
     {
       "name": "default",
-      "displayName": "Default Config",
+      "displayName": "Default ",
       "description": "Default build using Ninja generator",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
@@ -21,21 +21,25 @@
         "CMAKE_TOOLCHAIN_FILE": {
           "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
            "type": "FILEPATH"
-        }
+        },
+        "VCPKG_TRACE_FIND_PACKAGE" : true
       },
       "hidden": true
     },
     {
-      "name": "windows-default",
-      "displayName": "Windows default Config",
+      "name": "windows-VS-default",
+      "displayName": "Windows default VS",
       "inherits": "default",
       "generator": "Visual Studio 17 2022",
-      "hidden": true
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_HOST_TRIPLET": "x64-windows"
+      }
     },
     {
-      "name": "windows-x64",
-      "displayName": "Windows X64",
-      "inherits": "windows-default",
+      "name": "windows-VS-x64",
+      "displayName": "Windows X64 VS",
+      "inherits": "windows-VS-default",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -43,9 +47,9 @@
       "hidden": true
     },
     {
-      "name": "windows-debug-x64",
-      "displayName": "Windows debug x64 Config",
-      "inherits": "windows-x64",
+      "name": "windows-VS-debug-x64",
+      "displayName": "Windows debug x64 VS",
+      "inherits": "windows-VS-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "DEBUG"
@@ -54,9 +58,51 @@
       "hidden": false
     },
     {
-      "name": "windows-release-x64",
-      "displayName": "Windows release x64 Config",
-      "inherits": "windows-x64",
+      "name": "windows-VS-release-x64",
+      "displayName": "Windows release x64 VS",
+      "inherits": "windows-VS-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "RELEASE"
+        }
+      },
+      "hidden": false
+    },
+    {
+      "name": "windows-Ninja-default",
+      "displayName": "Windows default  ninja",
+      "inherits": "default",
+      "generator": "Ninja",
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_HOST_TRIPLET": "x64-windows"
+      }
+    },
+    {
+      "name": "windows-Ninja-x64",
+      "displayName": "Windows X64 ninja",
+      "inherits": "windows-Ninja-default",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "hidden": true
+    },
+    {
+      "name": "windows-Ninja-debug-x64",
+      "displayName": "Windows debug x64 ninja",
+      "inherits": "windows-Ninja-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "DEBUG"
+        }
+      },
+      "hidden": false
+    },
+    {
+      "name": "windows-Ninja-release-x64",
+      "displayName": "Windows release x64 ninja",
+      "inherits": "windows-Ninja-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "RELEASE"
@@ -67,16 +113,30 @@
   ],
   "buildPresets": [
     {
-      "name": "trading-platform-ninja-win-x64-debug",
-      "displayName": "trading platform windows x64 debug build",
-      "configurePreset": "windows-debug-x64",
+      "name": "trading-platform-VS-win-x64-debug",
+      "displayName": "trading platform windows VS x64 debug build",
+      "configurePreset": "windows-VS-debug-x64",
       "targets" : ["TradingPlatform"],
       "verbose": true
     },
     {
-      "name": "trading-platform-ninja-win-x64-releaes",
-      "displayName": "trading platform windows x64 release build",
-      "configurePreset": "windows-release-x64",
+      "name": "trading-platform-VS-win-x64-releaes",
+      "displayName": "trading platform windows VS x64 release build",
+      "configurePreset": "windows-VS-release-x64",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-Ninja-win-x64-debug",
+      "displayName": "trading platform windows Ninja x64 debug build",
+      "configurePreset": "windows-Ninja-debug-x64",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-Ninja-win-x64-releaes",
+      "displayName": "trading platform windows Ninja x64 release build",
+      "configurePreset": "windows-Ninja-release-x64",
       "targets" : ["TradingPlatform"],
       "verbose": true
     }

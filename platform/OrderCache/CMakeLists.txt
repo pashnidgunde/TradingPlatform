@@ -10,5 +10,6 @@ add_library (OrderCache
   ./OrderCacheImpl.cpp)
 
 link_directories(${PROJECT_NAME} {Boost_LIBRARY_DIRS})
+set_target_properties(OrderCache PROPERTIES FOLDER "Platform")
 
 add_subdirectory(test)
