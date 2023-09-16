@@ -31,10 +31,7 @@
       "displayName": "Windows default VS",
       "inherits": "default",
       "generator": "Visual Studio 17 2022",
-      "hidden": true,
-      "cacheVariables": {
-        "VCPKG_HOST_TRIPLET": "x64-windows"
-      }
+      "hidden": true
     },
     {
       "name": "windows-VS-x64",
@@ -69,29 +66,64 @@
       "hidden": false
     },
     {
-      "name": "windows-Ninja-default",
+      "name": "Ninja-default",
       "displayName": "Windows default  ninja",
       "inherits": "default",
       "generator": "Ninja",
-      "hidden": true,
-      "cacheVariables": {
-        "VCPKG_HOST_TRIPLET": "x64-windows"
-      }
+      "hidden": true
     },
     {
-      "name": "windows-Ninja-x64",
-      "displayName": "Windows X64 ninja",
-      "inherits": "windows-Ninja-default",
+      "name": "Ninja-gcc-x64",
+      "displayName": "X64 ninja gcc",
+      "inherits": "Ninja-default",
       "architecture": {
         "value": "x64",
         "strategy": "external"
       },
-      "hidden": true
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "value": "g++"
+        }
+      }
     },
     {
-      "name": "windows-Ninja-debug-x64",
-      "displayName": "Windows debug x64 ninja",
-      "inherits": "windows-Ninja-x64",
+      "name": "Ninja-gcc-x64-debug",
+      "displayName": "X64 ninja gcc debug",
+      "inherits": "Ninja-gcc-x64",
+      "hidden": false,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "DEBUG"
+        }
+      }
+    },
+    {
+      "name": "Ninja-gcc-x64-release",
+      "displayName": "X64 ninja gcc release",
+      "inherits": "Ninja-gcc-x64",
+      "hidden": false,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "RELEASE"
+        }
+      }
+    },
+    {
+      "name": "Ninja-clang-x64",
+      "displayName": "ninja clang x64",
+      "inherits": "Ninja-default",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "value": "clang"
+        }
+      }
+    },
+    {
+      "name": "Ninja-clang-x64-debug",
+      "displayName": "Ninja clang debug x64",
+      "inherits": "Ninja-clang-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "DEBUG"
@@ -100,9 +132,9 @@
       "hidden": false
     },
     {
-      "name": "windows-Ninja-release-x64",
-      "displayName": "Windows release x64 ninja",
-      "inherits": "windows-Ninja-x64",
+      "name": "Ninja-clang-x64-release",
+      "displayName": "Ninja clang relase x64",
+      "inherits": "Ninja-clang-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "RELEASE"
@@ -127,16 +159,30 @@
       "verbose": true
     },
     {
-      "name": "trading-platform-Ninja-win-x64-debug",
-      "displayName": "trading platform windows Ninja x64 debug build",
-      "configurePreset": "windows-Ninja-debug-x64",
+      "name": "trading-platform-ninja-gcc-x64-debug",
+      "displayName": "trading platform ninja x64 debug build",
+      "configurePreset": "Ninja-gcc-x64-debug",
       "targets" : ["TradingPlatform"],
       "verbose": true
     },
     {
-      "name": "trading-platform-Ninja-win-x64-releaes",
-      "displayName": "trading platform windows Ninja x64 release build",
-      "configurePreset": "windows-Ninja-release-x64",
+      "name": "trading-platform-ninja-gcc-x64-release",
+      "displayName": "trading platform ninja gcc x64 release build",
+      "configurePreset": "Ninja-gcc-x64-release",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-clang-x64-debug",
+      "displayName": "trading platform ninja clang x64 debug build",
+      "configurePreset": "Ninja-clang-x64-debug",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-clang-x64-release",
+      "displayName": "trading platform windows ninja clangx64 debug build",
+      "configurePreset": "Ninja-clang-x64-release",
       "targets" : ["TradingPlatform"],
       "verbose": true
     }

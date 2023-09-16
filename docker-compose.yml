@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  tradingplatform:
+    image: tradingplatform
+    build:
+      context: .
+      dockerfile: ./Dockerfile
