@@ -76,4 +76,5 @@ public:
     // return all orders in cache in a vector
     virtual std::vector<Order> getAllOrders() const = 0;
 
+    virtual ~OrderCacheInterface() {}
 };

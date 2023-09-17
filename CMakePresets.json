@@ -10,7 +10,7 @@
   "configurePresets": [
     {
       "name": "default",
-      "displayName": "Default Config",
+      "displayName": "Default ",
       "description": "Default build using Ninja generator",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
@@ -21,21 +21,22 @@
         "CMAKE_TOOLCHAIN_FILE": {
           "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
            "type": "FILEPATH"
-        }
+        },
+        "VCPKG_TRACE_FIND_PACKAGE" : true
       },
       "hidden": true
     },
     {
-      "name": "windows-default",
-      "displayName": "Windows default Config",
+      "name": "windows-VS-default",
+      "displayName": "Windows default VS",
       "inherits": "default",
       "generator": "Visual Studio 17 2022",
       "hidden": true
     },
     {
-      "name": "windows-x64",
-      "displayName": "Windows X64",
-      "inherits": "windows-default",
+      "name": "windows-VS-x64",
+      "displayName": "Windows X64 VS",
+      "inherits": "windows-VS-default",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -43,9 +44,9 @@
       "hidden": true
     },
     {
-      "name": "windows-debug-x64",
-      "displayName": "Windows debug x64 Config",
-      "inherits": "windows-x64",
+      "name": "windows-VS-debug-x64",
+      "displayName": "Windows debug x64 VS",
+      "inherits": "windows-VS-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "DEBUG"
@@ -54,9 +55,86 @@
       "hidden": false
     },
     {
-      "name": "windows-release-x64",
-      "displayName": "Windows release x64 Config",
-      "inherits": "windows-x64",
+      "name": "windows-VS-release-x64",
+      "displayName": "Windows release x64 VS",
+      "inherits": "windows-VS-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "RELEASE"
+        }
+      },
+      "hidden": false
+    },
+    {
+      "name": "Ninja-default",
+      "displayName": "Windows default  ninja",
+      "inherits": "default",
+      "generator": "Ninja",
+      "hidden": true
+    },
+    {
+      "name": "Ninja-gcc-x64",
+      "displayName": "X64 ninja gcc",
+      "inherits": "Ninja-default",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "value": "g++"
+        }
+      }
+    },
+    {
+      "name": "Ninja-gcc-x64-debug",
+      "displayName": "X64 ninja gcc debug",
+      "inherits": "Ninja-gcc-x64",
+      "hidden": false,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "DEBUG"
+        }
+      }
+    },
+    {
+      "name": "Ninja-gcc-x64-release",
+      "displayName": "X64 ninja gcc release",
+      "inherits": "Ninja-gcc-x64",
+      "hidden": false,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "RELEASE"
+        }
+      }
+    },
+    {
+      "name": "Ninja-clang-x64",
+      "displayName": "ninja clang x64",
+      "inherits": "Ninja-default",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": {
+          "value": "clang"
+        }
+      }
+    },
+    {
+      "name": "Ninja-clang-x64-debug",
+      "displayName": "Ninja clang debug x64",
+      "inherits": "Ninja-clang-x64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "DEBUG"
+        }
+      },
+      "hidden": false
+    },
+    {
+      "name": "Ninja-clang-x64-release",
+      "displayName": "Ninja clang relase x64",
+      "inherits": "Ninja-clang-x64",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "RELEASE"
@@ -67,16 +145,44 @@
   ],
   "buildPresets": [
     {
-      "name": "trading-platform-ninja-win-x64-debug",
-      "displayName": "trading platform windows x64 debug build",
-      "configurePreset": "windows-debug-x64",
+      "name": "trading-platform-VS-win-x64-debug",
+      "displayName": "trading platform windows VS x64 debug build",
+      "configurePreset": "windows-VS-debug-x64",
       "targets" : ["TradingPlatform"],
       "verbose": true
     },
     {
-      "name": "trading-platform-ninja-win-x64-releaes",
-      "displayName": "trading platform windows x64 release build",
-      "configurePreset": "windows-release-x64",
+      "name": "trading-platform-VS-win-x64-releaes",
+      "displayName": "trading platform windows VS x64 release build",
+      "configurePreset": "windows-VS-release-x64",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-gcc-x64-debug",
+      "displayName": "trading platform ninja x64 debug build",
+      "configurePreset": "Ninja-gcc-x64-debug",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-gcc-x64-release",
+      "displayName": "trading platform ninja gcc x64 release build",
+      "configurePreset": "Ninja-gcc-x64-release",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-clang-x64-debug",
+      "displayName": "trading platform ninja clang x64 debug build",
+      "configurePreset": "Ninja-clang-x64-debug",
+      "targets" : ["TradingPlatform"],
+      "verbose": true
+    },
+    {
+      "name": "trading-platform-ninja-clang-x64-release",
+      "displayName": "trading platform windows ninja clangx64 debug build",
+      "configurePreset": "Ninja-clang-x64-release",
       "targets" : ["TradingPlatform"],
       "verbose": true
     }
