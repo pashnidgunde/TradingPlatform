@@ -7,7 +7,7 @@ add_library (FixTagTransformer
   ./FixTagTransformer.cpp)
 
 target_include_directories(FixTagTransformer PRIVATE ./include)
-target_include_directories(FixTagTransformer PUBLIC SYSTEM ${Boost_INCLUDE_DIRS})
+target_include_directories(FixTagTransformer SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 	
 link_directories(${PROJECT_NAME} {Boost_LIBRARY_DIRS})
 

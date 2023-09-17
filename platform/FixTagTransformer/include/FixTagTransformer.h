@@ -67,7 +67,7 @@ struct FixTagTransformer {
         auto statement = (+(int_)) >> '=' >> *alnum >> ';';
         //auto statement = (+(char_)-'=') >> '=';
         //auto statement = (+(char_)-'=') >> '=' >> (+(char_)-';') >> ';';
-        auto tag_values = (statement);
+        //auto tag_values = (statement);
 
         auto begin = str.begin();
         auto end = str.end();

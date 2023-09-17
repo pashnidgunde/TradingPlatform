@@ -65,9 +65,9 @@ unsigned int OrderCacheImpl::getMatchingSizeForSecurity(const std::string& secur
     };*/
 
     auto adjustQty = [&](const auto& order, unsigned int matchedQty) {
-        auto& orders_by_orderid = m_orders.get<OrderIdTag>();
-        auto it = orders_by_orderid.find(order.orderId());
         const_cast<Order&>(order).setQty(order.qty() - matchedQty);
+        //auto& orders_by_orderid = m_orders.get<OrderIdTag>();
+        //auto it = orders_by_orderid.find(order.orderId());
         //orders_by_orderid.modify(it, newQty(order.qty() - matchedQty));
     };
 
