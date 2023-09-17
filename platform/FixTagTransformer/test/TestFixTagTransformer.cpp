@@ -20,7 +20,7 @@ TEST_F(TestFixTagTransformer, testValidStatement) {
     {
         "35=D;"
         ,"35=;"             // no value specified == reset
-        ,"35=100000;"       
+        ,"35=100000;"
     };
     
     for (const auto& validStatement : validStatements) {
@@ -31,10 +31,12 @@ TEST_F(TestFixTagTransformer, testValidStatement) {
 TEST_F(TestFixTagTransformer, testInvalidStatements) {
     //auto statement = (+(int_)) >> '=' >> *alnum >> ';';
     std::vector<std::string> validStatements =
+
     {
         "35=D"             // no semicolon
         ,"=D;"             // no tag specified
-        ,"="               // no tag or no value
+        ,"="               // no tag or no value or semilicon
+        ,"-35=1000;"       // negative tag
     };
 
     for (const auto& validStatement : validStatements) {

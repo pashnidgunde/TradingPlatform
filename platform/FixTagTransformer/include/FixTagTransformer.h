@@ -60,11 +60,11 @@ struct FixTagTransformer {
         //ast_eval eval;                      // Evaluates the program
         
         namespace x3 = boost::spirit::x3;
-        using x3::int_;
+        using x3::uint_;
         using x3::alnum;
         using boost::spirit::x3::ascii::space_type;
 
-        auto statement = (+(int_)) >> '=' >> *alnum >> ';';
+        auto statement = (+(uint_)) >> '=' >> *alnum >> ';';
         //auto statement = (+(char_)-'=') >> '=';
         //auto statement = (+(char_)-'=') >> '=' >> (+(char_)-';') >> ';';
         //auto tag_values = (statement);
