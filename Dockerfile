@@ -14,6 +14,11 @@ RUN yes | apt install python3-pip
 RUN pip install --upgrade cmake
 RUN apt-get install -y git ninja-build vim curl zip unzip tar pkg-config
 
+#ccache
+RUN apt install -y ccache
+RUN /usr/sbin/update-ccache-symlinks
+RUN export PATH="/usr/lib/ccache:$PATH"
+
 # Copy the current folder which contains C++ source code to the Docker image under /usr/src
 COPY . /usr/src/$PROJECT
 
