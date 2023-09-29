@@ -112,7 +112,7 @@ struct Statement {
         return r;
     }
 
-    const std::string& applied() const { return _message; }
+    [[nodiscard]] const std::string& applied() const { return _message; }
 };
 
 struct FixTagTransformer {
