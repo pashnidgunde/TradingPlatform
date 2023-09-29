@@ -3,10 +3,10 @@ A simple trading platform that simulates clients and exchages. The intent is to 
 
 ## Build Instructions :
 ### External build dependencies for building from source
-| Plugin | README |
-| ------ | ------ |
-| CMake | https://cmake.org/ |
-| Ninja | [https://ninja-build.org/]|
+| Plugin | Version | README |
+| ------ | ------ | ------|
+| CMake | >= 3.27 | https://cmake.org/ |
+| Ninja | --- | [https://ninja-build.org/]|
 
 ### Building for source
 ```sh
