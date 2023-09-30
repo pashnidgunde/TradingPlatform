@@ -5,12 +5,12 @@
 namespace platform{
     template<typename OrderType>
     struct OrderBook {
-
         bool isEmpty() const {
-            return true;
+            return buyOrders.empty() && sellOrders.empty();
         }
 
-        platform::LinkedList<OrderType> orders;
+        platform::LinkedList<OrderType> buyOrders;
+        platform::LinkedList<OrderType> sellOrders;
     };
 
 }

@@ -14,8 +14,12 @@ namespace platform {
 
     };
 
-    template<typename T, typename Pred = std::less<T>>
+    template<typename T, typename Comp = std::less<T>>
     struct LinkedList {
+        bool empty() const {
+            return head == nullptr;
+        }
+
         void insert(T data) {
             if (!head) {
                 head = new Node<T>(data);
@@ -25,6 +29,7 @@ namespace platform {
         }
 
         Node<T> *head = nullptr;
+        Comp comparator;
     };
 
 }
