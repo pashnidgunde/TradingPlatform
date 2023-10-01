@@ -3,7 +3,12 @@ project(TestOrderBook)
 find_package(GTest CONFIG REQUIRED)
 
 add_executable (${PROJECT_NAME}
-    TestOrderBook.cpp)
+        TestLLOrderedByLess.cpp
+        TestOrderBook.cpp
+        TestLLIterator.cpp
+        TestReverseIterator.cpp
+        TestOrderedByGreater.cpp
+)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../include)
 target_link_libraries(${PROJECT_NAME} PRIVATE OrderBook GTest::gtest GTest::gtest_main)

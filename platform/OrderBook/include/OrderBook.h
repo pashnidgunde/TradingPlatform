@@ -6,11 +6,11 @@ namespace platform{
     template<typename OrderType>
     struct OrderBook {
         bool isEmpty() const {
-            return buyOrders.empty() && sellOrders.empty();
+            return buyOrders.isEmpty() && sellOrders.isEmpty();
         }
 
-        platform::LinkedList<OrderType> buyOrders;
-        platform::LinkedList<OrderType> sellOrders;
+        platform::LinkedList<OrderType, std::greater<OrderType>> buyOrders;
+        platform::LinkedList<OrderType /*, std::less<OrderType> */> sellOrders;
     };
 
 }

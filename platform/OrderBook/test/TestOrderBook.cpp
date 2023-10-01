@@ -19,16 +19,6 @@ protected:
 TEST_F(TestOrderBook, IsEmptyInitially) {
     auto orderBook = std::make_unique<OrderBookType>();
     EXPECT_TRUE(orderBook->isEmpty());
-
-}
-
-TEST_F(TestOrderBook, addOrder) {
-//    Order o("Any", "", "", 0, "", "");
-//    orderBook->addOrder(o);
-//    auto orders = orderBook->getAllOrders();
-//    EXPECT_EQ(orders.size(), 1);
-//    auto& oa = orders[0];
-//    EXPECT_EQ(oa, o);
 }
 
 
