@@ -2,9 +2,10 @@ project (OrderBook LANGUAGES CXX)
 
 add_library (${PROJECT_NAME}
     include/LinkedList.h
-    include/Order.h
+    include/MatchingFields.h
     include/OrderBook.h
     OrderBook.cpp
+    include/Order.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)

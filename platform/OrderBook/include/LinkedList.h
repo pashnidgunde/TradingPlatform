@@ -26,12 +26,6 @@ namespace platform {
             Iterator(Node<T>* other) {
                 node = other;
             }
-//            bool operator!=(const Iterator& other) const {
-//                return node != other.node;
-//            }
-//            bool operator==(const Iterator& other) const {
-//                return node == other.node;
-//            }
             Iterator (const Iterator& other) {
                 node = other.node;
             }
@@ -68,12 +62,7 @@ namespace platform {
             ReverseIterator(Node<T>* other) {
                 node = other;
             }
-//            bool operator!=(const ReverseIterator& other) const {
-//                return node != other.node;
-//            }
-//            bool operator==(const ReverseIterator& other) const {
-//                return node == other.node;
-//            }
+
             ReverseIterator (const ReverseIterator& other) {
                 node = other.node;
             }

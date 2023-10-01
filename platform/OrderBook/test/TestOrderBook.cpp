@@ -11,16 +11,33 @@ protected:
 
     void TearDown() override {
     }
-
-    using OrderType = platform::Order<uint64_t,double,uint32_t>;
-    using OrderBookType = platform::OrderBook<OrderType>;
 };
 
 TEST_F(TestOrderBook, IsEmptyInitially) {
-    auto orderBook = std::make_unique<OrderBookType>();
+    auto orderBook = std::make_unique<OrderBook>();
     EXPECT_TRUE(orderBook->isEmpty());
+    EXPECT_TRUE(orderBook->buyOrders("Any").isEmpty());
+    EXPECT_TRUE(orderBook->sellOrders("Any").isEmpty());
 }
 
+TEST_F(TestOrderBook, testOrderConstructor) {
+    OrderBook b;
+    char ibm[]="IBM";
+    EXPECT_TRUE(b.buyOrders("IBM").isEmpty());
+    EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
+    b.addOrder(Order(1,1,10,100,'B',ibm));
+    EXPECT_FALSE(b.buyOrders("IBM").isEmpty());
+    EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
+    b.addOrder(Order(1,1,10,100,'S',ibm));
+    EXPECT_FALSE(b.sellOrders("IBM").isEmpty());
+
+    EXPECT_EQ(b.buyOrders("IBM").size(), 1);
+    EXPECT_EQ(b.sellOrders("IBM").size(), 1);
+
+    b.addOrder(Order(1,1,10,100,'S',ibm));
+    b.addOrder(Order(1,1,10,100,'S',ibm));
+    EXPECT_EQ(b.sellOrders("IBM").size(), 3);
+}
 
 
 

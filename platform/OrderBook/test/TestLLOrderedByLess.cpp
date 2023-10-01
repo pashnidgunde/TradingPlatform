@@ -1,4 +1,5 @@
 #include "OrderBook.h"
+#include "MatchingFields.h"
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <random>
@@ -13,8 +14,7 @@ protected:
     void TearDown() override {
     }
 
-    using OrderType = platform::Order<uint64_t,double,uint32_t>;
-    using LinkedList = platform::LinkedList<OrderType, std::less<OrderType>>;
+    using LinkedList = platform::LinkedList<MatchingFields, std::less<MatchingFields>>;
 };
 
 TEST_F(TestLinkedListOrderedByLess, IsEmptyInitially) {
@@ -27,16 +27,16 @@ TEST_F(TestLinkedListOrderedByLess, IsEmptyInitially) {
 
 TEST_F(TestLinkedListOrderedByLess, addOrder) {
     auto ll = std::make_unique<LinkedList>();
-    ll->insert(OrderType(1,10.0,10));
+    ll->insert(MatchingFields(1,1, 10,10));
     EXPECT_FALSE(ll->isEmpty());
     EXPECT_EQ(ll->size(),1);
 }
 
 TEST_F(TestLinkedListOrderedByLess, testTwoOrders) {
     auto ll = std::make_unique<LinkedList>();
-    std::vector<OrderType> inputs {
-        OrderType(1,11,10),
-        OrderType(2,10,10),
+    std::vector<MatchingFields> inputs {
+        MatchingFields(1,1,11,10),
+        MatchingFields(2,1,10,10),
     };
 
     for (const auto& input : inputs) {
@@ -47,7 +47,7 @@ TEST_F(TestLinkedListOrderedByLess, testTwoOrders) {
 
     LinkedList::Iterator begin = ll->begin();
     LinkedList::Iterator end = ll->end();
-    std::vector<OrderType> actual;
+    std::vector<MatchingFields> actual;
     while(begin != end) {
         actual.emplace_back(*begin);
         begin++;
@@ -66,9 +66,9 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
     std::random_device seed;
     std::mt19937 gen{seed()}; // seed the generator
     std::uniform_int_distribution<> dist{1, 100}; // set min and max
-    std::vector<OrderType> inputs;
+    std::vector<MatchingFields> inputs;
     for (int i=0; i< 10; ++i) {
-        inputs.emplace_back(OrderType(i, dist(gen), i));
+        inputs.emplace_back(MatchingFields(i, i, dist(gen), i));
     }
 
     LinkedList ll;
@@ -81,7 +81,7 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
         return lhs.price < rhs.price;
     });
 
-    std::vector<OrderType> actual;
+    std::vector<MatchingFields> actual;
     for (auto iter= ll.begin(); iter != ll.end(); ++iter) {
         actual.emplace_back((*iter));
     }
