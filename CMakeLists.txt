@@ -16,7 +16,7 @@ endif()
 add_subdirectory(platform)
 #add_subdirectory(services)
 
-# for arranging projects under seperate folders
+# for arranging projects under separate folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
