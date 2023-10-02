@@ -99,16 +99,17 @@ namespace platform {
             return head == nullptr;
         }
 
-        auto insert(const T &data) {
+        NodePtr insert(const T &data) {
             auto node = new Node<T>(data);
             if (!head) {
                 head = node;
                 tail = head;
                 sz = 1;
-                return;
             }
-            this->comparedInsert(node);
-            sz++;
+            else {
+                this->comparedInsert(node);
+                sz++;
+            }
             return node;
         }
 

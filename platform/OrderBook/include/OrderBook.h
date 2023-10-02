@@ -24,7 +24,7 @@ namespace platform{
             const std::string& symbol = order.symbol;
             auto & orders = (order.side == 'B') ?
                             buyOrders(symbol) : sellOrders(symbol);
-            orders.insert(std::move(order.mf));
+            orders.insert(order.mf);
         }
 
         using MatchFieldsType = platform::LinkedList<platform::MatchingFields>;
