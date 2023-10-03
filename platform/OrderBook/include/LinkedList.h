@@ -20,10 +20,12 @@ namespace platform {
     template<typename T, typename Comp = std::less<T>>
     struct LinkedList {
     public:
+        using NodePtr = Node<T>* ;
+
         class Iterator {
         public:
             Iterator() = delete;
-            Iterator(Node<T>* other) {
+            Iterator(NodePtr  other) {
                 node = other;
             }
             Iterator (const Iterator& other) {
@@ -45,21 +47,21 @@ namespace platform {
                 node = node->next;
                 return old;
             }
-            Node<T>* operator ->() const {
+            NodePtr  operator ->() const {
                 return node;
             }
 
-            operator Node<T>* () const {
+            operator NodePtr  () const {
                 return node;
             }
         private:
-            Node<T>* node = nullptr;
+            NodePtr  node = nullptr;
         };
 
         class ReverseIterator {
         public:
             ReverseIterator() = delete;
-            ReverseIterator(Node<T>* other) {
+            ReverseIterator(NodePtr  other) {
                 node = other;
             }
 
@@ -82,31 +84,33 @@ namespace platform {
                 node = node->prev;
                 return old;
             }
-            Node<T>* operator ->() const {
+            NodePtr operator ->() const {
                 return node;
             }
 
-            operator Node<T>* () const {
+            operator NodePtr  () const {
                 return node;
             }
         private:
-            Node<T>* node = nullptr;
+            NodePtr  node = nullptr;
         };
 
         bool isEmpty() const {
             return head == nullptr;
         }
 
-        void insert(const T &data) {
+        NodePtr insert(const T &data) {
             auto node = new Node<T>(data);
             if (!head) {
                 head = node;
                 tail = head;
                 sz = 1;
-                return;
             }
-            this->comparedInsert(node);
-            sz++;
+            else {
+                this->comparedInsert(node);
+                sz++;
+            }
+            return node;
         }
 
         size_t size() const {
@@ -119,7 +123,7 @@ namespace platform {
         ReverseIterator rend() { return ReverseIterator(nullptr); }
 
     private:
-        void comparedInsert(Node<T> *nn) {
+        void comparedInsert(NodePtr nn) {
             // should insert at start ?
             if (compare(nn->value, head->value)) {
                 nn->next = head;
@@ -150,8 +154,8 @@ namespace platform {
         }
 
     private:
-        Node<T> *head = nullptr;
-        Node<T> *tail = nullptr;
+        NodePtr head = nullptr;
+        NodePtr tail = nullptr;
         size_t sz = 0;
         Comp compare{};
     };
