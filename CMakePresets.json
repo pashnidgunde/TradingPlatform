@@ -15,11 +15,11 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "environment": {
-        "VCPKG_ROOT" : "${sourceDir}/vcpkg"
+        "VCPKG_ROOT" : "${sourceDir}/../"
       },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": {
-          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+          "value": "${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
            "type": "FILEPATH"
         },
         "VCPKG_TRACE_FIND_PACKAGE" : true
@@ -67,7 +67,7 @@
     },
     {
       "name": "Ninja-default",
-      "displayName": "Windows default  ninja",
+      "displayName": "Windows default ninja",
       "inherits": "default",
       "generator": "Ninja",
       "hidden": true
@@ -82,6 +82,7 @@
       },
       "hidden": true,
       "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET" : "x64-linux",
         "CMAKE_CXX_COMPILER": {
           "value": "g++"
         }
