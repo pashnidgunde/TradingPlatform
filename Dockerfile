@@ -3,31 +3,44 @@ FROM ubuntu:latest
 
 ENV PROJECT=TradingPlatform
 
-# Update apps on the base image
 RUN apt-get -y update && apt-get install -y
+RUN apt-get install -y g++
+RUN apt-get install -y gcc
+RUN apt-get install -y gdb
+RUN apt-get install -y clang
+RUN apt-get install -y ninja-build
 
-# Install the Clang compiler
-RUN apt-get -y install clang
+RUN apt-get install -y git
+RUN apt-get install -y curl
+RUN apt-get install -y zip
+RUN apt-get install -y unzip
+RUN apt-get install -y tar
+RUN apt-get install -y pkg-config
 
-# Install cmake
 RUN yes | apt install python3-pip
 RUN pip install --upgrade cmake
-RUN apt-get install -y git ninja-build vim curl zip unzip tar pkg-config
+RUN export PATH=/usr/local/bin/:$PATH
 
 #ccache
 RUN apt install -y ccache
 RUN /usr/sbin/update-ccache-symlinks
-RUN export PATH="/usr/lib/ccache:$PATH"
+RUN export PATH=/usr/lib/ccache:$PATH
+
+RUN git clone https://github.com/Microsoft/vcpkg.git
+RUN vcpkg/bootstrap-vcpkg.sh
 
 # Copy the current folder which contains C++ source code to the Docker image under /usr/src
-COPY . /usr/src/$PROJECT
+COPY . /tmp/$PROJECT
 
 # Specify the working directory
-WORKDIR /usr/src/$PROJECT
+WORKDIR /tmp/$PROJECT
+
+RUN git clone https://github.com/Microsoft/vcpkg.git
+RUN vcpkg/bootstrap-vcpkg.sh
 
 RUN rm -rf build
-RUN cmake --preset=Ninja-gcc-x64-debug
-RUN cd build/Ninja-gcc-x64-debug/
-RUN ninja
+#RUN cmake --preset=Ninja-gcc-x64-debug
+#RUN cd build/Ninja-gcc-x64-debug/
+#RUN ninja
 
 #CMD ["/bin/bash"]
