@@ -7,8 +7,8 @@ add_library (OrderCache
   ./include/OrderCacheImpl.h
   ./OrderCacheImpl.cpp)
 
-target_include_directories(OrderCache SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 link_directories(${PROJECT_NAME} {Boost_LIBRARY_DIRS})
-set_target_properties(OrderCache PROPERTIES FOLDER "Platform")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "Platform")
 
 add_subdirectory(test)

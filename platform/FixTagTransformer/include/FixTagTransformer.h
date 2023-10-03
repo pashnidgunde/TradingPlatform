@@ -3,6 +3,7 @@
 #define BOOST_SPIRIT_X3_DEBUG
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/spirit/home/x3.hpp>
@@ -44,13 +45,12 @@ namespace x3 = boost::spirit::x3;
 
 
 struct Statement {
-    Statement(const std::string message) : _message(message) {
+    explicit Statement(std::string  message) : _message(std::move(message)) {
     }
 
     std::string _message;
 
-    template<typename Iter>
-    bool apply(Iter begin, Iter end) {
+    bool apply(const std::string& rule) {
         using x3::uint_;
         using x3::char_;
         using x3::alnum;
@@ -58,7 +58,7 @@ struct Statement {
         using x3::_attr;
         space_type space;
 
-        const auto messgage_begin = _message.begin();
+        const auto begin = _message.begin();
 
         auto tag_start = std::string::npos;
         auto value_start = std::string::npos;
@@ -87,35 +87,32 @@ struct Statement {
                     _message += tag_value + ";";
                 }
                 else {
-                    _message.erase(messgage_begin + tag_start, _message.end());
+                    _message.erase(begin + tag_start, _message.end());
                 }
                 return;
             }
             
             if (tag_value.empty()) {
-                _message.erase(messgage_begin + tag_start, messgage_begin + tag_end);
+                _message.erase(begin + tag_start, begin + tag_end);
             }
             else {
-                _message.replace(messgage_begin + value_start, messgage_begin + value_end, tag_value);
+                _message.replace(begin + value_start, begin + value_end, tag_value);
             }
         };
        
         auto statement_rule = (+(char_ - '='))[tag] >> '=' >> (*(char_ - ';'))[value] >> ';';
         //auto statement = ((+(char_ - '=')) >> char_('='))[tag] >> (+(char_ - ';'))[value] >> ';';
   
+        auto rule_begin = rule.begin();
+        auto rule_end = rule.end();
+        bool r = x3::phrase_parse(rule_begin, rule_end, statement_rule, space);
 
-        bool r = x3::phrase_parse(begin, end, statement_rule, space);
-
-        if (begin != end) // fail if we did not get a full match
+        if (rule_begin != rule_end) // fail if we did not get a full match
             return false;
         return r;
     }
 
-    bool apply(const std::string& statement) {
-        return apply(statement.begin(), statement.end());
-    }
-
-    const std::string& appplied() const { return _message; }
+    [[nodiscard]] const std::string& applied() const { return _message; }
 };
 
 struct FixTagTransformer {
@@ -130,11 +127,9 @@ struct FixTagTransformer {
 
 	bool apply() {
         for (const auto& rule : _rules) {
-            _statement.apply(rule.begin(), rule.end());
-            std::cout << _statement.appplied();
+            _statement.apply(rule);
+            std::cout << _statement.applied();
         }
         return true;
 	}
-
-    const std::string& applied() { return _statement.appplied(); }
 };
