@@ -5,160 +5,133 @@
 
 namespace platform {
 
-    template<typename T>
-    struct Node {
-        Node *prev = nullptr;
-        T value{};
-        Node *next = nullptr;
+template <typename T> struct Node {
+  Node *prev = nullptr;
+  T value{};
+  Node *next = nullptr;
 
-        explicit Node(T v) : value(std::move(v)) {
-        }
+  explicit Node(T v) : value(std::move(v)) {}
 
-        T& get() { return value; }
-    };
+  T &get() { return value; }
+};
 
-    template<typename T, typename Comp = std::less<T>>
-    struct LinkedList {
-    public:
-        using NodePtr = Node<T>* ;
+template <typename T, typename Comp = std::less<T>> struct LinkedList {
+public:
+  using NodePtr = Node<T> *;
 
-        class Iterator {
-        public:
-            Iterator() = delete;
-            Iterator(NodePtr  other) {
-                node = other;
-            }
-            Iterator (const Iterator& other) {
-                node = other.node;
-            }
-            Iterator& operator=(const Iterator& other) {
-                node = other.node;
-                return *this;
-            }
-            T& operator*() const {
-                return node->get();
-            }
-            Iterator& operator++() {
-                node = node->next;
-                return *this;
-            }
-            Iterator operator++(int) {
-                Iterator old = *this;
-                node = node->next;
-                return old;
-            }
-            NodePtr  operator ->() const {
-                return node;
-            }
+  class Iterator {
+  public:
+    Iterator() = delete;
+    explicit Iterator(NodePtr other) { node = other; }
+    Iterator(const Iterator &other) { node = other.node; }
+    Iterator &operator=(const Iterator &other) {
+      node = other.node;
+      return *this;
+    }
+    T &operator*() const { return node->get(); }
+    Iterator &operator++() {
+      node = node->next;
+      return *this;
+    }
+    const Iterator operator++(int) {
+      Iterator old = *this;
+      node = node->next;
+      return old;
+    }
+    NodePtr operator->() const { return node; }
 
-            operator NodePtr  () const {
-                return node;
-            }
-        private:
-            NodePtr  node = nullptr;
-        };
+    operator NodePtr() const { return node; }
 
-        class ReverseIterator {
-        public:
-            ReverseIterator() = delete;
-            ReverseIterator(NodePtr  other) {
-                node = other;
-            }
+  private:
+    NodePtr node = nullptr;
+  };
 
-            ReverseIterator (const ReverseIterator& other) {
-                node = other.node;
-            }
-            ReverseIterator& operator=(const ReverseIterator& other) {
-                node = other.node;
-                return *this;
-            }
-            T& operator*() const {
-                return node->get();
-            }
-            ReverseIterator& operator++() {
-                node = node->prev;
-                return *this;
-            }
-            ReverseIterator operator++(int) {
-                ReverseIterator old = *this;
-                node = node->prev;
-                return old;
-            }
-            NodePtr operator ->() const {
-                return node;
-            }
+  class ReverseIterator {
+  public:
+    ReverseIterator() = delete;
+    explicit ReverseIterator(NodePtr other) { node = other; }
 
-            operator NodePtr  () const {
-                return node;
-            }
-        private:
-            NodePtr  node = nullptr;
-        };
+    ReverseIterator(const ReverseIterator &other) { node = other.node; }
+    ReverseIterator &operator=(const ReverseIterator &other) {
+      node = other.node;
+      return *this;
+    }
+    T &operator*() const { return node->get(); }
+    ReverseIterator &operator++() {
+      node = node->prev;
+      return *this;
+    }
+    ReverseIterator operator++(int) {
+      ReverseIterator old = *this;
+      node = node->prev;
+      return old;
+    }
+    NodePtr operator->() const { return node; }
 
-        bool isEmpty() const {
-            return head == nullptr;
-        }
+    operator NodePtr() const { return node; }
 
-        NodePtr insert(const T &data) {
-            auto node = new Node<T>(data);
-            if (!head) {
-                head = node;
-                tail = head;
-                sz = 1;
-            }
-            else {
-                this->comparedInsert(node);
-                sz++;
-            }
-            return node;
-        }
+  private:
+    NodePtr node = nullptr;
+  };
 
-        size_t size() const {
-            return sz;
-        }
+  bool isEmpty() const { return head == nullptr; }
 
-        Iterator begin() { return Iterator(head); };
-        Iterator end() { return Iterator(nullptr); }
-        ReverseIterator rbegin() { return ReverseIterator(tail); }
-        ReverseIterator rend() { return ReverseIterator(nullptr); }
+  NodePtr insert(const T &data) {
+    auto node = new Node<T>(data);
+    if (!head) {
+      head = node;
+      tail = head;
+      sz = 1;
+    } else {
+      this->comparedInsert(node);
+      sz++;
+    }
+    return node;
+  }
 
-    private:
-        void comparedInsert(NodePtr nn) {
-            // should insert at start ?
-            if (compare(nn->value, head->value)) {
-                nn->next = head;
-                head->prev = nn;
-                head = nn;
-                return;
-            }
+  size_t size() const { return sz; }
 
-            // should insert at end ?
-            if (compare(tail->value, nn->value)) {
-                tail->next = nn;
-                nn->prev = tail;
-                tail = nn;
-                return;
-            }
+  Iterator begin() { return Iterator(head); };
+  Iterator end() { return Iterator(nullptr); }
+  ReverseIterator rbegin() { return ReverseIterator(tail); }
+  ReverseIterator rend() { return ReverseIterator(nullptr); }
 
-            auto it = begin();
-            while (it) {
-                if (compare(nn->value, it->value)) {
-                    nn->next = it;
-                    nn->prev = it->prev;
-                    nn->prev->next = nn;
-                    it->prev = nn;
-                    return;
-                }
-                it = it->next;
-            }
-        }
+private:
+  void comparedInsert(NodePtr nn) {
+    // should insert at start ?
+    if (compare(nn->value, head->value)) {
+      nn->next = head;
+      head->prev = nn;
+      head = nn;
+      return;
+    }
 
-    private:
-        NodePtr head = nullptr;
-        NodePtr tail = nullptr;
-        size_t sz = 0;
-        Comp compare{};
-    };
+    // should insert at end ?
+    if (compare(tail->value, nn->value)) {
+      tail->next = nn;
+      nn->prev = tail;
+      tail = nn;
+      return;
+    }
 
-}
+    auto it = begin();
+    while (it) {
+      if (compare(nn->value, it->value)) {
+        nn->next = it;
+        nn->prev = it->prev;
+        nn->prev->next = nn;
+        it->prev = nn;
+        return;
+      }
+      it = it->next;
+    }
+  }
 
+private:
+  NodePtr head = nullptr;
+  NodePtr tail = nullptr;
+  size_t sz = 0;
+  Comp compare{};
+};
+
+} // namespace platform

@@ -1,34 +1,27 @@
 #pragma once
 
-#include "MatchingFields.h"
 #include "LinkedList.h"
+#include "MatchingFields.h"
 #include "Order.h"
 #include <unordered_map>
 
-namespace platform{
-    struct OrderBook {
+namespace platform {
+struct OrderBook {
 
-        bool isEmpty() const {
-            return book.empty();
-        }
+  [[nodiscard]] bool isEmpty() const { return book.empty(); }
 
-        auto& buyOrders(const std::string& symbol) {
-            return book[symbol].first;
-        }
+  auto &buyOrders(const std::string &symbol) { return book[symbol].first; }
 
-        auto& sellOrders(const std::string& symbol) {
-            return book[symbol].second;
-        }
+  auto &sellOrders(const std::string &symbol) { return book[symbol].second; }
 
-        void addOrder(const Order& order) {
-            const std::string& symbol = order.symbol;
-            auto & orders = (order.side == 'B') ?
-                            buyOrders(symbol) : sellOrders(symbol);
-            orders.insert(order.mf);
-        }
+  void addOrder(const Order &order) {
+    const std::string &symbol = order.symbol;
+    auto &orders = (order.side == 'B') ? buyOrders(symbol) : sellOrders(symbol);
+    orders.insert(order.mf);
+  }
 
-        using MatchFieldsType = platform::LinkedList<platform::MatchingFields>;
-        std::unordered_map<std::string,std::pair<MatchFieldsType,MatchFieldsType>> book;
-    };
-}
-
+  using MatchFieldsType = platform::LinkedList<platform::MatchingFields>;
+  std::unordered_map<std::string, std::pair<MatchFieldsType, MatchFieldsType>>
+      book;
+};
+} // namespace platform

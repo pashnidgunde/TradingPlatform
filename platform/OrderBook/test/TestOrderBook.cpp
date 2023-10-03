@@ -1,43 +1,38 @@
 #include "OrderBook.h"
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace platform;
 
 class TestOrderBook : public ::testing::Test {
 protected:
-    void SetUp() override {
-    }
+  void SetUp() override {}
 
-    void TearDown() override {
-    }
+  void TearDown() override {}
 };
 
 TEST_F(TestOrderBook, IsEmptyInitially) {
-    auto orderBook = std::make_unique<OrderBook>();
-    EXPECT_TRUE(orderBook->isEmpty());
-    EXPECT_TRUE(orderBook->buyOrders("Any").isEmpty());
-    EXPECT_TRUE(orderBook->sellOrders("Any").isEmpty());
+  auto orderBook = std::make_unique<OrderBook>();
+  EXPECT_TRUE(orderBook->isEmpty());
+  EXPECT_TRUE(orderBook->buyOrders("Any").isEmpty());
+  EXPECT_TRUE(orderBook->sellOrders("Any").isEmpty());
 }
 
 TEST_F(TestOrderBook, testOrderConstructor) {
-    OrderBook b;
-    char ibm[]="IBM";
-    EXPECT_TRUE(b.buyOrders("IBM").isEmpty());
-    EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
-    b.addOrder(Order(1,1,10,100,'B',ibm));
-    EXPECT_FALSE(b.buyOrders("IBM").isEmpty());
-    EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
-    b.addOrder(Order(1,1,10,100,'S',ibm));
-    EXPECT_FALSE(b.sellOrders("IBM").isEmpty());
+  OrderBook b;
+  char ibm[] = "IBM";
+  EXPECT_TRUE(b.buyOrders("IBM").isEmpty());
+  EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
+  b.addOrder(Order(1, 1, 10, 100, 'B', ibm));
+  EXPECT_FALSE(b.buyOrders("IBM").isEmpty());
+  EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
+  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
+  EXPECT_FALSE(b.sellOrders("IBM").isEmpty());
 
-    EXPECT_EQ(b.buyOrders("IBM").size(), 1);
-    EXPECT_EQ(b.sellOrders("IBM").size(), 1);
+  EXPECT_EQ(b.buyOrders("IBM").size(), 1);
+  EXPECT_EQ(b.sellOrders("IBM").size(), 1);
 
-    b.addOrder(Order(1,1,10,100,'S',ibm));
-    b.addOrder(Order(1,1,10,100,'S',ibm));
-    EXPECT_EQ(b.sellOrders("IBM").size(), 3);
+  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
+  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
+  EXPECT_EQ(b.sellOrders("IBM").size(), 3);
 }
-
-
-
