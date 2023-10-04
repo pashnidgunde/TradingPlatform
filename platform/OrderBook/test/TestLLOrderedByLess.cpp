@@ -63,6 +63,7 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
   std::mt19937 gen{seed()};                     // seed the generator
   std::uniform_int_distribution<> dist{1, 100}; // set min and max
   std::vector<MatchingFields> inputs;
+  inputs.reserve(10);
   for (int i = 0; i < 10; ++i) {
     inputs.emplace_back(i, i, dist(gen), i);
   }
@@ -77,7 +78,8 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
   });
 
   std::vector<MatchingFields> actual;
-  for (auto iter = ll.begin(); iter != ll.end(); ++iter) {
+    actual.reserve(10);
+  for (auto iter : ll) {
     actual.emplace_back(iter->get());
   }
 
