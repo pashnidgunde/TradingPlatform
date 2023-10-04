@@ -19,74 +19,55 @@ template <typename T, typename Comp = std::less<T>> struct LinkedList {
 public:
   using NodePtr = Node<T> *;
 
-  class Iterator {
-  public:
-    Iterator() = delete;
-    explicit Iterator(NodePtr other) { node = other; }
-    Iterator(const Iterator &other) { node = other.node; }
-    Iterator &operator=(const Iterator &other) {
+  struct IteratorBase {
+    IteratorBase() = delete;
+    explicit IteratorBase(NodePtr other) { node = other; }
+    IteratorBase(const IteratorBase &other) { node = other.node; }
+    IteratorBase &operator=(const IteratorBase &other) {
       node = other.node;
       return *this;
     }
     NodePtr operator*() const { return node; }
+    NodePtr operator->() const { return node; }
+    explicit operator NodePtr() const { return node; }
+    explicit operator bool () const { return node != nullptr; }
+    bool operator== (const IteratorBase& rhs) const {
+      return this->node == rhs.node;
+    }
+    bool operator!= (const IteratorBase& rhs) const {
+      return this->node != rhs.node;
+    }
+
+    NodePtr node = nullptr;
+  };
+
+  class Iterator : public IteratorBase {
+  public:
+    explicit Iterator(NodePtr other) : IteratorBase(other)
+    {}
     Iterator &operator++() {
-      node = node->next;
+      this->node = this->node->next;
       return *this;
     }
     const Iterator operator++(int) {
       Iterator old = *this;
-      node = node->next;
+      this->node = this->node->next;
       return old;
     }
-    NodePtr operator->() const { return node; }
-
-    explicit operator NodePtr() const { return node; }
-    explicit operator bool () const { return node != nullptr; }
-      bool operator== (const Iterator& rhs) const {
-          return this->node == *rhs;
-      }
-      bool operator!= (const Iterator& rhs) const {
-          return this->node != *rhs;
-      }
-
-  private:
-    NodePtr node = nullptr;
   };
 
-  class ReverseIterator {
+  class ReverseIterator : public IteratorBase {
   public:
-    ReverseIterator() = delete;
-    explicit ReverseIterator(NodePtr other) { node = other; }
-
-    ReverseIterator(const ReverseIterator &other) { node = other.node; }
-    ReverseIterator &operator=(const ReverseIterator &other) {
-      node = other.node;
-      return *this;
-    }
-    NodePtr operator*() const { return node; }
+    explicit ReverseIterator(NodePtr other) : IteratorBase(other) {}
     ReverseIterator &operator++() {
-      node = node->prev;
+      this->node = this->node->prev;
       return *this;
     }
     const ReverseIterator operator++(int) {
-
       ReverseIterator old = *this;
-      node = node->prev;
+      this->node = this->node->prev;
       return old;
     }
-    NodePtr operator->() const { return node; }
-
-    explicit operator NodePtr() const { return node; }
-    explicit operator bool () const { return node != nullptr; }
-    bool operator== (const ReverseIterator& rhs) const {
-        return this->node == *rhs;
-    }
-    bool operator!= (const ReverseIterator& rhs) const {
-      return this->node != *rhs;
-    }
-
-  private:
-    NodePtr node = nullptr;
   };
 
   bool isEmpty() const { return head == nullptr; }
