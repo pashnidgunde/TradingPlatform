@@ -123,7 +123,7 @@ private:
         it->prev = nn;
         return;
       }
-      it = it->next;
+      it++;
     }
   }
 
