@@ -82,6 +82,5 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
   for (auto iter : ll) {
     actual.emplace_back(iter->get());
   }
-
   EXPECT_EQ(inputs, actual);
 }

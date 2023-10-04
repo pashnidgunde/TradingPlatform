@@ -10,7 +10,6 @@ protected:
   void SetUp() override {}
 
   void TearDown() override {}
-
   using LinkedList = platform::LinkedList<MatchingFields, std::greater<>>;
 };
 

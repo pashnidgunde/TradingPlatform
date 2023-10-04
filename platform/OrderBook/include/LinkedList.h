@@ -69,6 +69,7 @@ public:
       return *this;
     }
     const ReverseIterator operator++(int) {
+
       ReverseIterator old = *this;
       node = node->prev;
       return old;
@@ -88,7 +89,7 @@ public:
     NodePtr node = nullptr;
   };
 
-  [[nodiscard]] bool isEmpty() const { return head == nullptr; }
+  bool isEmpty() const { return head == nullptr; }
 
   NodePtr insert(const T &data) {
     auto node = new Node<T>(data);
@@ -103,8 +104,7 @@ public:
     return node;
   }
 
-  [[nodiscard]] size_t size() const { return sz; }
-
+  size_t size() const { return sz; }
   Iterator begin() { return Iterator(head); };
   Iterator end() { return Iterator(nullptr); }
   ReverseIterator rbegin() { return ReverseIterator(tail); }
