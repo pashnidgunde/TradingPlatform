@@ -78,7 +78,7 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
   });
 
   std::vector<MatchingFields> actual;
-    actual.reserve(10);
+  actual.reserve(10);
   for (auto iter : ll) {
     actual.emplace_back(iter->get());
   }

@@ -11,8 +11,7 @@ protected:
 
   void TearDown() override {}
 
-  using LinkedList =
-      platform::LinkedList<MatchingFields, std::greater<>>;
+  using LinkedList = platform::LinkedList<MatchingFields, std::greater<>>;
 };
 
 TEST_F(TestLinkedListOrderedByGreater, IsEmptyInitially) {
