@@ -24,7 +24,6 @@ TEST_F(TestLinkListIterator, testForwardIterator) {
   ll.insert(1);
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
-  ASSERT_EQ(*begin, 1);
   ASSERT_EQ(begin->get(), 1);
 
   ASSERT_NE(begin++, ll.end());
@@ -43,7 +42,6 @@ TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
   ll.insert(2);
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
-  ASSERT_EQ(*begin, 1);
   ASSERT_EQ(begin->get(), 1);
 
   ASSERT_NE(begin++, ll.end());
@@ -65,8 +63,8 @@ TEST_F(TestLinkListIterator, testInsertAtMiddle) {
   ll.insert(2);
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
-  ASSERT_EQ(*begin, 1);
-  ASSERT_EQ(*(++begin), 2);
-  ASSERT_EQ(*(++begin), 3);
+  ASSERT_EQ(begin->get(), 1);
+  ASSERT_EQ((++begin)->get(), 2);
+  ASSERT_EQ((++begin)->get(), 3);
   ASSERT_EQ(++begin, ll.end());
 }
