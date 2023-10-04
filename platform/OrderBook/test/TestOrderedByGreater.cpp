@@ -10,9 +10,7 @@ protected:
   void SetUp() override {}
 
   void TearDown() override {}
-
-  using LinkedList =
-      platform::LinkedList<MatchingFields, std::greater<MatchingFields>>;
+  using LinkedList = platform::LinkedList<MatchingFields, std::greater<>>;
 };
 
 TEST_F(TestLinkedListOrderedByGreater, IsEmptyInitially) {
@@ -20,7 +18,7 @@ TEST_F(TestLinkedListOrderedByGreater, IsEmptyInitially) {
   EXPECT_TRUE(ll->isEmpty());
   EXPECT_EQ(ll->size(), 0);
   EXPECT_EQ(ll->rbegin(), ll->rend());
-  EXPECT_EQ(ll->rend(), nullptr);
+  EXPECT_EQ(*(ll->rend()), nullptr);
 }
 
 TEST_F(TestLinkedListOrderedByGreater, addOrder) {
@@ -47,7 +45,7 @@ TEST_F(TestLinkedListOrderedByGreater, testTwoOrders) {
   LinkedList::Iterator end = ll->end();
   std::vector<MatchingFields> actual;
   while (begin != end) {
-    actual.emplace_back(*begin);
+    actual.emplace_back(begin->get());
     begin++;
   }
 
@@ -64,8 +62,9 @@ TEST_F(TestLinkedListOrderedByGreater, testMultiple) {
   std::mt19937 gen{seed()};                     // seed the generator
   std::uniform_int_distribution<> dist{1, 100}; // set min and max
   std::vector<MatchingFields> inputs;
+  inputs.reserve(10);
   for (int i = 0; i < 10; ++i) {
-    inputs.emplace_back(MatchingFields(i, i, dist(gen), i));
+    inputs.emplace_back(i, i, dist(gen), i);
   }
 
   LinkedList ll;
@@ -78,8 +77,9 @@ TEST_F(TestLinkedListOrderedByGreater, testMultiple) {
   });
 
   std::vector<MatchingFields> actual;
-  for (auto iter = ll.begin(); iter != ll.end(); ++iter) {
-    actual.emplace_back((*iter));
+  actual.reserve(10);
+  for (auto iter : ll) {
+    actual.emplace_back(iter->get());
   }
 
   EXPECT_EQ(inputs, actual);

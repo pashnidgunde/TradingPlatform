@@ -28,7 +28,7 @@ public:
       node = other.node;
       return *this;
     }
-    T &operator*() const { return node->get(); }
+    NodePtr operator*() const { return node; }
     Iterator &operator++() {
       node = node->next;
       return *this;
@@ -40,7 +40,14 @@ public:
     }
     NodePtr operator->() const { return node; }
 
-    operator NodePtr() const { return node; }
+    explicit operator NodePtr() const { return node; }
+    explicit operator bool () const { return node != nullptr; }
+      bool operator== (const Iterator& rhs) const {
+          return this->node == *rhs;
+      }
+      bool operator!= (const Iterator& rhs) const {
+          return this->node != *rhs;
+      }
 
   private:
     NodePtr node = nullptr;
@@ -56,19 +63,27 @@ public:
       node = other.node;
       return *this;
     }
-    T &operator*() const { return node->get(); }
+    NodePtr operator*() const { return node; }
     ReverseIterator &operator++() {
       node = node->prev;
       return *this;
     }
-    ReverseIterator operator++(int) {
+    const ReverseIterator operator++(int) {
+
       ReverseIterator old = *this;
       node = node->prev;
       return old;
     }
     NodePtr operator->() const { return node; }
 
-    operator NodePtr() const { return node; }
+    explicit operator NodePtr() const { return node; }
+    explicit operator bool () const { return node != nullptr; }
+    bool operator== (const ReverseIterator& rhs) const {
+        return this->node == *rhs;
+    }
+    bool operator!= (const ReverseIterator& rhs) const {
+      return this->node != *rhs;
+    }
 
   private:
     NodePtr node = nullptr;
@@ -90,7 +105,6 @@ public:
   }
 
   size_t size() const { return sz; }
-
   Iterator begin() { return Iterator(head); };
   Iterator end() { return Iterator(nullptr); }
   ReverseIterator rbegin() { return ReverseIterator(tail); }
@@ -117,7 +131,7 @@ private:
     auto it = begin();
     while (it) {
       if (compare(nn->value, it->value)) {
-        nn->next = it;
+        nn->next = *it;
         nn->prev = it->prev;
         nn->prev->next = nn;
         it->prev = nn;
