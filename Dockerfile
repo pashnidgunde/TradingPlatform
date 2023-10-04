@@ -35,9 +35,11 @@ COPY . /tmp/$PROJECT
 # Specify the working directory
 WORKDIR /tmp/$PROJECT
 
+RUN cd ..
 RUN git clone https://github.com/Microsoft/vcpkg.git
 RUN vcpkg/bootstrap-vcpkg.sh
 
+RUN cd /tmp/$PROJECT
 RUN rm -rf build
 #RUN cmake --preset=Ninja-gcc-x64-debug
 #RUN cd build/Ninja-gcc-x64-debug/
