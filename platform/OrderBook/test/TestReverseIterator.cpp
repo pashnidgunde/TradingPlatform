@@ -20,7 +20,7 @@ TEST_F(TestLinkListReverseIterator, testReverseIterInitialState) {
 
 TEST_F(TestLinkListReverseIterator, testReverseIterator) {
   LinkedList<int> ll;
-  ll.insert(1);
+    EXPECT_NE(nullptr, ll.insert(1));
   LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 1);
@@ -37,8 +37,8 @@ TEST_F(TestLinkListReverseIterator, testReverseIterator) {
 
 TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
   LinkedList<int> ll;
-  ll.insert(1);
-  ll.insert(2);
+    EXPECT_NE(nullptr, ll.insert(1));
+    EXPECT_NE(nullptr, ll.insert(2));
   LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 2);
@@ -57,9 +57,9 @@ TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
 
 TEST_F(TestLinkListReverseIterator, testInsertAtMiddle) {
   LinkedList<int> ll;
-  ll.insert(1);
-  ll.insert(3);
-  ll.insert(2);
+    EXPECT_NE(nullptr, ll.insert(1));
+    EXPECT_NE(nullptr, ll.insert(3));
+    EXPECT_NE(nullptr, ll.insert(2));
   LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 3);

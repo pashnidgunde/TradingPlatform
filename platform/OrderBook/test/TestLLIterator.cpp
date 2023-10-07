@@ -21,7 +21,7 @@ TEST_F(TestLinkListIterator, testInitialState) {
 
 TEST_F(TestLinkListIterator, testForwardIterator) {
   LinkedList<int> ll;
-  ll.insert(1);
+  EXPECT_NE(nullptr, ll.insert(1));
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
@@ -38,8 +38,8 @@ TEST_F(TestLinkListIterator, testForwardIterator) {
 
 TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
   LinkedList<int> ll;
-  ll.insert(1);
-  ll.insert(2);
+    EXPECT_NE(nullptr, ll.insert(1));
+    EXPECT_NE(nullptr, ll.insert(2));
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
@@ -58,9 +58,9 @@ TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
 
 TEST_F(TestLinkListIterator, testInsertAtMiddle) {
   LinkedList<int> ll;
-  ll.insert(1);
-  ll.insert(3);
-  ll.insert(2);
+    EXPECT_NE(nullptr, ll.insert(1));
+    EXPECT_NE(nullptr, ll.insert(3));
+    EXPECT_NE(nullptr, ll.insert(2));
   LinkedList<int>::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);

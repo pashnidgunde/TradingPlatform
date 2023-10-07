@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LinkedList.h"
-#include "MatchingFields.h"
+#include "OrderBookFields.h"
 #include "Order.h"
 #include <unordered_map>
 
@@ -14,13 +14,15 @@ struct OrderBook {
 
   auto &sellOrders(const std::string &symbol) { return book[symbol].second; }
 
-  void addOrder(const Order &order) {
-    const std::string &symbol = order.symbol;
-    auto &orders = (order.side == 'B') ? buyOrders(symbol) : sellOrders(symbol);
-    orders.insert(order.mf);
+  auto addBuy(const std::string& symbol, OrderBookFields fields) {
+    return buyOrders(symbol).insert(fields);
   }
 
-  using MatchFieldsType = platform::LinkedList<platform::MatchingFields>;
+  auto addSell(const std::string& symbol, const OrderBookFields& fields) {
+      return sellOrders(symbol).insert(fields);
+  }
+
+  using MatchFieldsType = platform::LinkedList<platform::OrderBookFields>;
   std::unordered_map<std::string, std::pair<MatchFieldsType, MatchFieldsType>>
       book;
 };

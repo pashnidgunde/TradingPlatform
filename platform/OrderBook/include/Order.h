@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MatchingFields.h"
+#include "OrderBookFields.h"
 #include <cstring>
 
 // Assumes that symbol length is 32 bit
@@ -12,7 +12,7 @@ struct Order {
     memcpy(symbol, sym, sizeof symbol);
   }
 
-  platform::MatchingFields mf;
+  platform::OrderBookFields mf;
   char side = 'B';
   char symbol[32]{};
 };

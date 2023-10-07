@@ -20,19 +20,19 @@ TEST_F(TestOrderBook, IsEmptyInitially) {
 
 TEST_F(TestOrderBook, testOrderConstructor) {
   OrderBook b;
-  char ibm[] = "IBM";
+  std::string symbol = "IBM";
   EXPECT_TRUE(b.buyOrders("IBM").isEmpty());
   EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
-  b.addOrder(Order(1, 1, 10, 100, 'B', ibm));
+  b.addBuy("IBM", OrderBookFields(1, 1, 10, 100));
   EXPECT_FALSE(b.buyOrders("IBM").isEmpty());
   EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
-  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
+  b.addSell("IBM", OrderBookFields(1, 1, 10, 100));
   EXPECT_FALSE(b.sellOrders("IBM").isEmpty());
 
   EXPECT_EQ(b.buyOrders("IBM").size(), 1);
   EXPECT_EQ(b.sellOrders("IBM").size(), 1);
 
-  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
-  b.addOrder(Order(1, 1, 10, 100, 'S', ibm));
+  b.addSell("IBM", OrderBookFields(1, 1, 10, 100));
+  b.addSell("IBM", OrderBookFields(1, 1, 10, 100));
   EXPECT_EQ(b.sellOrders("IBM").size(), 3);
 }

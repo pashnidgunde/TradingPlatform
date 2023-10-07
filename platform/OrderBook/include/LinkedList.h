@@ -72,7 +72,7 @@ public:
 
   bool isEmpty() const { return head == nullptr; }
 
-  NodePtr insert(const T &data) {
+  [[nodiscard]] NodePtr insert(const T &data) {
     auto node = new Node<T>(data);
     if (!head) {
       head = node;
