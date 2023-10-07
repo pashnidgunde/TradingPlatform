@@ -33,7 +33,7 @@ TEST_F(TestLinkedListOrderedByLess, testTwoOrders) {
   auto ll = std::make_unique<LinkedList>();
   std::vector<OrderBookFields> inputs{
           OrderBookFields(1, 1, 11, 10),
-          OrderBookFields(2, 1, 10, 10),
+          OrderBookFields(2, 1, 10, 10)
   };
 
   for (const auto &input : inputs) {
@@ -57,6 +57,32 @@ TEST_F(TestLinkedListOrderedByLess, testTwoOrders) {
   EXPECT_EQ(actual, inputs);
 }
 
+TEST_F(TestLinkedListOrderedByLess, testSameValues) {
+    auto ll = std::make_unique<LinkedList>();
+    std::vector<OrderBookFields> inputs{
+            OrderBookFields(1, 1, 11, 10),
+            OrderBookFields(1, 2, 11, 10),
+            OrderBookFields(1, 3, 11, 10),
+            OrderBookFields(1, 4, 11, 10),
+    };
+
+    for (const auto &input : inputs) {
+        EXPECT_NE(nullptr, ll->insert(input));
+    }
+
+    EXPECT_EQ(ll->size(), 4);
+
+    LinkedList::Iterator begin = ll->begin();
+    LinkedList::Iterator end = ll->end();
+    std::vector<OrderBookFields> actual;
+    while (begin != end) {
+        actual.emplace_back(begin->get());
+        begin++;
+    }
+
+    EXPECT_EQ(actual, inputs);
+}
+
 TEST_F(TestLinkedListOrderedByLess, testMultiple) {
 
   std::random_device seed;
@@ -74,12 +100,12 @@ TEST_F(TestLinkedListOrderedByLess, testMultiple) {
   }
 
   std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
-    return lhs.price < rhs.price;
+    return lhs.price < rhs.price || ((rhs.price == lhs.price) && lhs.oi.orderId < rhs.oi.orderId);
   });
 
   std::vector<OrderBookFields> actual;
   actual.reserve(10);
-  for (auto iter : ll) {
+  for (auto iter = ll.begin(); iter != ll.end(); ++iter) {
     actual.emplace_back(iter->get());
   }
   EXPECT_EQ(inputs, actual);
