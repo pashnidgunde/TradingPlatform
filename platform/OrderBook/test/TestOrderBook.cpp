@@ -22,7 +22,7 @@ TEST_F(TestOrderBook, IsEmptyInitially) {
 
 TEST_F(TestOrderBook, testOrderConstructor) {
   OrderBook b;
-  std::string symbol = "IBM";
+  std::string symbol{"IBM"};
   EXPECT_TRUE(b.buyOrders("IBM").isEmpty());
   EXPECT_TRUE(b.sellOrders("IBM").isEmpty());
   b.addBuy("IBM", OrderBookFields(1, 1, 10, 100));
@@ -42,7 +42,7 @@ TEST_F(TestOrderBook, testOrderConstructor) {
 TEST_F(TestOrderBook, testBuyOrdering) {
 
     OrderBook b;
-    std::string symbol = "IBM";
+    std::string symbol{"IBM"};
     std::random_device seed;
     std::mt19937 gen{seed()};                     // seed the generator
     std::uniform_int_distribution<> dist{1, 100}; // set min and max
@@ -73,7 +73,7 @@ TEST_F(TestOrderBook, testBuyOrdering) {
 TEST_F(TestOrderBook, testSellOrdering) {
 
     OrderBook b;
-    std::string symbol = "IBM";
+    std::string symbol{"IBM"};
     std::random_device seed;
     std::mt19937 gen{seed()};                     // seed the generator
     std::uniform_int_distribution<> dist{1, 100}; // set min and max
@@ -105,7 +105,7 @@ TEST_F(TestOrderBook, testSellOrdering) {
 TEST_F(TestOrderBook, testNoMatch) {
 
     OrderBook b;
-    std::string symbol = "IBM";
+    std::string symbol{"IBM"};
     std::random_device seed;
     std::vector<OrderBookFields> inputs;
     inputs.reserve(10);
@@ -131,7 +131,7 @@ TEST_F(TestOrderBook, testNoMatch) {
 TEST_F(TestOrderBook, testSellSweep) {
 
     OrderBook b;
-    std::string symbol = "IBM";
+    std::string symbol{"IBM"};
     std::random_device seed;
     std::vector<OrderBookFields> inputs;
     inputs.reserve(10);
@@ -156,7 +156,7 @@ TEST_F(TestOrderBook, testSellSweep) {
 TEST_F(TestOrderBook, testBuySweep) {
 
     OrderBook b;
-    std::string symbol = "IBM";
+    std::string symbol{"IBM"};
     std::random_device seed;
     std::vector<OrderBookFields> inputs;
     inputs.reserve(10);
@@ -175,4 +175,34 @@ TEST_F(TestOrderBook, testBuySweep) {
     for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
         EXPECT_EQ(iter->get().qty, 0);
     }
+}
+
+TEST_F(TestOrderBook, testRandom) {
+
+    OrderBook b;
+    std::string symbol{"IBM"};
+    std::random_device seed;
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+
+    b.addBuy("IBM",OrderBookFields(1, 1, 11, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 12, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 13, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 14, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 15, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 16, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 17, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 18, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 19, 10));
+    b.addBuy("IBM",OrderBookFields(1, 1, 20, 10));
+
+    b.addSell("IBM",OrderBookFields(1, 1, 20, 10));
+    auto matches = b.tryMatch("IBM");
+    EXPECT_EQ(matches.size(), 1);
+
+    auto node = b.addSell("IBM",OrderBookFields(1, 1, 16, 55));
+    matches = b.tryMatch("IBM");
+    EXPECT_EQ(matches.size(), 5);
+    EXPECT_EQ(node->get().qty, 15);
+
 }
