@@ -12,16 +12,13 @@
       "name": "default",
       "displayName": "Default ",
       "description": "Default build using Ninja generator",
+      "environment": {
+        "VCPKG_ROOT" : "${sourceDir}/.."
+      },
+      "toolchainFile": "$env{VCPKG_ROOT}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "environment": {
-        "VCPKG_ROOT" : "${sourceDir}/../"
-      },
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": {
-          "value": "${sourceDir}/../vcpkg/scripts/buildsystems/vcpkg.cmake",
-           "type": "FILEPATH"
-        },
         "VCPKG_TRACE_FIND_PACKAGE" : true
       },
       "hidden": true
