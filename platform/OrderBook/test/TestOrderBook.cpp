@@ -1,5 +1,4 @@
 #include "OrderBook.h"
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <random>
 
@@ -92,22 +91,61 @@ TEST_F(TestOrderBook, testSellOrdering) {
         return lhs.price < rhs.price;
     });
 
-    std::vector<OrderBookFields> actuals;
+    std::vector<OrderBookFields> actual;
     auto& sells = b.sellOrders("IBM");
     EXPECT_EQ(sells.size(), 10);
-    actuals.reserve(10);
+    actual.reserve(10);
     for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
-        actuals.emplace_back(iter->get());
+        actual.emplace_back(iter->get());
     }
 
-    EXPECT_EQ(inputs, actuals);
+    EXPECT_EQ(inputs, actual);
+}
 
-    for (const auto& input : inputs ) {
-        std::cout << input << ",";
-    }
-    std::cout << "\n";
+TEST_F(TestOrderBook, testNoMatch) {
 
-    for (const auto& actual : actuals ) {
-        std::cout << actual << ",";
+    OrderBook b;
+    std::string symbol = "IBM";
+    std::random_device seed;
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+        b.addBuy("IBM",OrderBookFields(i, i, 10, 10));
     }
+    b.addSell("IBM", OrderBookFields(1, 1, 11, 100));
+    auto matches = b.tryMatch("IBM");
+
+    EXPECT_EQ(matches.size(), 0);
+}
+
+TEST_F(TestOrderBook, testSellSweep) {
+
+    OrderBook b;
+    std::string symbol = "IBM";
+    std::random_device seed;
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+        b.addSell("IBM",OrderBookFields(i, i, 10, 10));
+    }
+    b.addBuy("IBM", OrderBookFields(1, 1, 11, 100));
+    auto matches = b.tryMatch("IBM");
+
+    EXPECT_EQ(matches.size(), 10);
+}
+
+TEST_F(TestOrderBook, testBuySweep) {
+
+    OrderBook b;
+    std::string symbol = "IBM";
+    std::random_device seed;
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+        b.addBuy("IBM",OrderBookFields(i, i, 10, 10));
+    }
+    b.addSell("IBM", OrderBookFields(1, 1,9 , 100));
+    auto matches = b.tryMatch("IBM");
+
+    EXPECT_EQ(matches.size(), 10);
 }

@@ -30,6 +30,7 @@ namespace platform {
         OrderIdentifier oi;
         int price = 0;
         int qty = 0;
+
         bool operator==(const OrderBookFields &rhs) const {
             return price == rhs.price;
         }
