@@ -7,6 +7,7 @@
 #include "Order.h"
 #include "Match.h"
 
+
 namespace platform {
 
 struct OrderBook {
@@ -17,7 +18,6 @@ struct OrderBook {
     using BuyNode = BuyOrders::value_type;
     using SellNode = SellOrders::value_type;
     using Matches = std::list<platform::Match>;
-
 
     [[nodiscard]] bool isEmpty() const { return book.empty(); }
 

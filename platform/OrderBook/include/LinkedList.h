@@ -2,19 +2,9 @@
 
 #include <algorithm>
 #include <iostream>
+#include "NodePool.h"
 
 namespace platform {
-
-template <typename T> struct Node {
-  Node *prev = nullptr;
-  T value{};
-  Node *next = nullptr;
-
-  explicit Node(T v) : value(std::move(v)) {}
-
-  T& get() { return value; }
-  const T& get() const { return value; }
-};
 
 template <typename T, typename Comp> struct LinkedList {
 public:
@@ -74,8 +64,9 @@ public:
 
   bool isEmpty() const { return head == nullptr; }
 
-  [[nodiscard]] NodePtr insert(const T &data) {
-    auto node = new Node<T>(data);
+  [[nodiscard]] NodePtr insert(T data) {
+    auto node = new Node<T>();
+    node->value = std::move(data);
     if (!head) {
       head = node;
       tail = head;
@@ -93,7 +84,6 @@ public:
           prev = head;
           head = head->next;
           delete prev;
-
           sz--;
       }
   }
@@ -136,6 +126,7 @@ private:
   }
 
 private:
+    NodePool<T, 1024> pool;
   NodePtr head = nullptr;
   NodePtr tail = nullptr;
   size_t sz = 0;
