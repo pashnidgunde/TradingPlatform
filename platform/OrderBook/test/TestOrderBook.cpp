@@ -116,6 +116,16 @@ TEST_F(TestOrderBook, testNoMatch) {
     auto matches = b.tryMatch("IBM");
 
     EXPECT_EQ(matches.size(), 0);
+
+    auto& sells = b.sellOrders("IBM");
+    for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 100);
+    }
+
+    auto& buys = b.buyOrders("IBM");
+    for (auto iter = buys.begin(); iter != buys.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 10);
+    }
 }
 
 TEST_F(TestOrderBook, testSellSweep) {
@@ -132,6 +142,15 @@ TEST_F(TestOrderBook, testSellSweep) {
     auto matches = b.tryMatch("IBM");
 
     EXPECT_EQ(matches.size(), 10);
+
+    auto& sells = b.sellOrders("IBM");
+    for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 0);
+    }
+    auto& buys = b.buyOrders("IBM");
+    for (auto iter = buys.begin(); iter != buys.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 0);
+    }
 }
 
 TEST_F(TestOrderBook, testBuySweep) {
@@ -148,4 +167,12 @@ TEST_F(TestOrderBook, testBuySweep) {
     auto matches = b.tryMatch("IBM");
 
     EXPECT_EQ(matches.size(), 10);
+    auto& buys = b.buyOrders("IBM");
+    for (auto iter = buys.begin(); iter != buys.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 0);
+    }
+    auto& sells = b.buyOrders("IBM");
+    for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
+        EXPECT_EQ(iter->get().qty, 0);
+    }
 }
