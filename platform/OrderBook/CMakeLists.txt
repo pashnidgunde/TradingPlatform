@@ -6,6 +6,7 @@ add_library (${PROJECT_NAME}
     include/OrderBook.h
     OrderBook.cpp
     include/Order.h
+        include/Match.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)

@@ -11,17 +11,19 @@ protected:
 };
 
 TEST_F(TestLinkListReverseIterator, testReverseIterInitialState) {
-  auto ll = LinkedList<int>{};
-  LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
-  LinkedList<int>::ReverseIterator rend = ll.rend();
+    using IntLL = LinkedList<int,std::less<>>;
+  auto ll = IntLL{};
+  IntLL::ReverseIterator rbegin = ll.rbegin();
+  IntLL::ReverseIterator rend = ll.rend();
   ASSERT_EQ(rbegin, ll.rend());
   ASSERT_EQ(rend, ll.rend());
 }
 
 TEST_F(TestLinkListReverseIterator, testReverseIterator) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+  IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
-  LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
+  IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 1);
 
@@ -36,10 +38,11 @@ TEST_F(TestLinkListReverseIterator, testReverseIterator) {
 }
 
 TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+  IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(2));
-  LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
+  IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 2);
 
@@ -56,11 +59,12 @@ TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
 }
 
 TEST_F(TestLinkListReverseIterator, testInsertAtMiddle) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+  IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(3));
     EXPECT_NE(nullptr, ll.insert(2));
-  LinkedList<int>::ReverseIterator rbegin = ll.rbegin();
+  IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 3);
   ASSERT_EQ((++rbegin)->get(), 2);

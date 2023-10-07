@@ -11,18 +11,19 @@ protected:
 };
 
 TEST_F(TestLinkListIterator, testInitialState) {
-
-  auto ll = LinkedList<int>{};
-  LinkedList<int>::Iterator begin = ll.begin();
-  LinkedList<int>::Iterator end = ll.end();
+    using IntLL = LinkedList<int,std::less<>>;
+  auto ll = IntLL{};
+  IntLL::Iterator begin = ll.begin();
+  IntLL::Iterator end = ll.end();
   ASSERT_EQ(begin, ll.end());
   ASSERT_EQ(end, ll.end());
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+  IntLL ll;
   EXPECT_NE(nullptr, ll.insert(1));
-  LinkedList<int>::Iterator begin = ll.begin();
+  IntLL::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
 
@@ -37,10 +38,11 @@ TEST_F(TestLinkListIterator, testForwardIterator) {
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+    IntLL ll{};
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(2));
-  LinkedList<int>::Iterator begin = ll.begin();
+  IntLL::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
 
@@ -57,11 +59,12 @@ TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
 }
 
 TEST_F(TestLinkListIterator, testInsertAtMiddle) {
-  LinkedList<int> ll;
+    using IntLL = LinkedList<int,std::less<>>;
+  IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(3));
     EXPECT_NE(nullptr, ll.insert(2));
-  LinkedList<int>::Iterator begin = ll.begin();
+  IntLL::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
   ASSERT_EQ((++begin)->get(), 2);

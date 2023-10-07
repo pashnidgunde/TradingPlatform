@@ -15,9 +15,10 @@ template <typename T> struct Node {
   T &get() { return value; }
 };
 
-template <typename T, typename Comp = std::less<T>> struct LinkedList {
+template <typename T, typename Comp> struct LinkedList {
 public:
   using NodePtr = Node<T> *;
+  using value_type = NodePtr;
 
   struct IteratorBase {
     IteratorBase() = delete;
@@ -102,7 +103,7 @@ private:
     }
 
     // should insert at end ?
-    if (compare(tail->value, nn->value)) {
+    if (compare(tail->value, nn->value) || tail->value == nn->value) {
       tail->next = nn;
       nn->prev = tail;
       tail = nn;
@@ -120,6 +121,9 @@ private:
       }
       it++;
     }
+
+
+
   }
 
 private:

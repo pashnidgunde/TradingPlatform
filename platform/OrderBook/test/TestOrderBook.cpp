@@ -1,6 +1,9 @@
 #include "OrderBook.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <random>
+
+#include <iostream>
 
 using namespace platform;
 
@@ -35,4 +38,76 @@ TEST_F(TestOrderBook, testOrderConstructor) {
   b.addSell("IBM", OrderBookFields(1, 1, 10, 100));
   b.addSell("IBM", OrderBookFields(1, 1, 10, 100));
   EXPECT_EQ(b.sellOrders("IBM").size(), 3);
+}
+
+TEST_F(TestOrderBook, testBuyOrdering) {
+
+    OrderBook b;
+    std::string symbol = "IBM";
+    std::random_device seed;
+    std::mt19937 gen{seed()};                     // seed the generator
+    std::uniform_int_distribution<> dist{1, 100}; // set min and max
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+        inputs.emplace_back(i, i, dist(gen), i);
+    }
+
+    for (const auto& input : inputs) {
+        b.addBuy("IBM",input);
+    }
+
+    std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
+        return lhs.price > rhs.price;
+    });
+
+    std::vector<OrderBookFields> actual;
+    auto & buyOrders = b.buyOrders("IBM");
+    actual.reserve(10);
+    for (auto iter = buyOrders.begin(); iter != buyOrders.end(); ++iter) {
+        actual.emplace_back(iter->get());
+    }
+
+    EXPECT_EQ(inputs, actual);
+}
+
+TEST_F(TestOrderBook, testSellOrdering) {
+
+    OrderBook b;
+    std::string symbol = "IBM";
+    std::random_device seed;
+    std::mt19937 gen{seed()};                     // seed the generator
+    std::uniform_int_distribution<> dist{1, 100}; // set min and max
+    std::vector<OrderBookFields> inputs;
+    inputs.reserve(10);
+    for (int i = 0; i < 10; ++i) {
+        inputs.emplace_back(i, i, dist(gen), i);
+    }
+
+    for (const auto& input : inputs) {
+        b.addSell("IBM",input);
+    }
+
+    std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
+        return lhs.price < rhs.price;
+    });
+
+    std::vector<OrderBookFields> actuals;
+    auto& sells = b.sellOrders("IBM");
+    EXPECT_EQ(sells.size(), 10);
+    actuals.reserve(10);
+    for (auto iter = sells.begin(); iter != sells.end(); ++iter) {
+        actuals.emplace_back(iter->get());
+    }
+
+    EXPECT_EQ(inputs, actuals);
+
+    for (const auto& input : inputs ) {
+        std::cout << input << ",";
+    }
+    std::cout << "\n";
+
+    for (const auto& actual : actuals ) {
+        std::cout << actual << ",";
+    }
 }
