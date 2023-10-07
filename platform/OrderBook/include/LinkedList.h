@@ -12,7 +12,8 @@ template <typename T> struct Node {
 
   explicit Node(T v) : value(std::move(v)) {}
 
-  T &get() { return value; }
+  T& get() { return value; }
+  const T& get() const { return value; }
 };
 
 template <typename T, typename Comp> struct LinkedList {
@@ -86,6 +87,17 @@ public:
     return node;
   }
 
+  void removeIf(const std::function<bool(NodePtr node)> fn) {
+      NodePtr prev = nullptr;
+      while (head && fn(head)) {
+          prev = head;
+          head = head->next;
+          delete prev;
+
+          sz--;
+      }
+  }
+
   size_t size() const { return sz; }
   Iterator begin() { return Iterator(head); };
   Iterator end() { return Iterator(nullptr); }
@@ -121,9 +133,6 @@ private:
       }
       it++;
     }
-
-
-
   }
 
 private:

@@ -177,7 +177,7 @@ TEST_F(TestOrderBook, testBuySweep) {
     }
 }
 
-TEST_F(TestOrderBook, testRandom) {
+TEST_F(TestOrderBook, testRemove) {
 
     OrderBook b;
     std::string symbol{"IBM"};
@@ -202,7 +202,19 @@ TEST_F(TestOrderBook, testRandom) {
 
     auto node = b.addSell("IBM",OrderBookFields(1, 1, 16, 55));
     matches = b.tryMatch("IBM");
-    EXPECT_EQ(matches.size(), 5);
+    EXPECT_EQ(matches.size(), 4);
     EXPECT_EQ(node->get().qty, 15);
 
+    node = b.addSell("IBM",OrderBookFields(1, 1, 10, 500));
+    matches = b.tryMatch("IBM");
+    EXPECT_EQ(matches.size(), 5);
+    EXPECT_EQ(node->get().qty, 450);
+    EXPECT_EQ(b.buyOrders("IBM").size(), 0);
+    EXPECT_EQ(b.sellOrders("IBM").size(), 2);
+
+    EXPECT_EQ(b.buyOrders("IBM").begin(), b.buyOrders("IBM").end());
+    auto sellIter = b.sellOrders("IBM").begin();
+    EXPECT_EQ(sellIter->get().qty, 450);
+    sellIter++;
+    EXPECT_EQ(sellIter->get().qty, 15);
 }

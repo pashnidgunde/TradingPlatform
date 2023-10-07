@@ -33,41 +33,47 @@ struct OrderBook {
         return sellOrders(symbol).insert(fields);
     }
 
-      Matches tryMatch(const std::string& symbol/*, char triggeredBy*/) {
+    void removeFilled(const std::string& symbol) {
+        auto removeCondition = [](const Node<OrderBookFields>* node){ return node->get().qty == 0;};
+        buyOrders(symbol).removeIf(removeCondition);
+        sellOrders(symbol).removeIf(removeCondition);
+    }
 
-          auto adjustQty = [](OrderBookFields &of, int qty) {
-              of.qty -= qty;
-          };
+    Matches tryMatch(const std::string& symbol/*, char triggeredBy*/) {
 
-          auto filled = [](OrderBookFields &of) {
-              return of.qty == 0;
-          };
+      auto adjustQty = [](OrderBookFields &of, int qty) {
+          of.qty -= qty;
+      };
 
-//          auto matchPrice = [&](const auto &buy, const auto &sell) {
-//              return (triggeredBy == Order::BUY) ? buy.price : sell.price;
-//          };
+      auto filled = [](OrderBookFields &of) {
+          return of.qty == 0;
+      };
 
-          auto canMatch = [](const auto &buy, const auto &sell) {
-              return buy.price >= sell.price;
-          };
+      auto canMatch = [](const auto &buy, const auto &sell) {
+          return buy.price >= sell.price;
+      };
 
-          Matches matches;
-          for (auto buyIter: buyOrders(symbol)) {
-              for (auto sellIter : sellOrders(symbol)) {
-                  auto &buy = buyIter->get();
-                  auto &sell = sellIter->get();
-                  if (canMatch(buy, sell)) {
-                      auto matchQty = std::min(buy.qty, sell.qty);
-                      matches.emplace_back(buy.oi, sell.oi, std::max(buy.price, sell.price), matchQty);
-                      adjustQty(buy, matchQty);
-                      adjustQty(sell, matchQty);
-                      if (filled(buy)) {
-                          break;
-                      }
+      Matches matches;
+      for (auto buyIter: buyOrders(symbol)) {
+          for (auto sellIter : sellOrders(symbol)) {
+              auto &buy = buyIter->get();
+              auto &sell = sellIter->get();
+              if (canMatch(buy, sell)) {
+                  auto matchQty = std::min(buy.qty, sell.qty);
+                  matches.emplace_back(buy.oi, sell.oi, std::max(buy.price, sell.price), matchQty);
+                  adjustQty(buy, matchQty);
+                  adjustQty(sell, matchQty);
+                  if (filled(buy)) {
+                      break;
                   }
               }
           }
-          return matches;
       }
+      this->removeFilled(symbol);
+      return matches;
+  }
+
+
+
 };
 } // namespace platform
