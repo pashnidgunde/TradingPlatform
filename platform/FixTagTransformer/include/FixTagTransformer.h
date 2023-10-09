@@ -116,7 +116,7 @@ struct Statement {
 // struct FixTagTransformer {
 //	FixTagTransformer() = delete;
 //	explicit FixTagTransformer(const std::string& _message, const
-//std::vector<std::string>& rules) :
+// std::vector<std::string>& rules) :
 //         _statement(_message),
 //		_rules(rules)
 //	{}

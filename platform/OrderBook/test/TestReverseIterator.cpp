@@ -6,12 +6,11 @@ using namespace platform;
 class TestLinkListReverseIterator : public ::testing::Test {
 protected:
   void SetUp() override {}
-
   void TearDown() override {}
 };
 
 TEST_F(TestLinkListReverseIterator, testReverseIterInitialState) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   auto ll = IntLL{};
   IntLL::ReverseIterator rbegin = ll.rbegin();
   IntLL::ReverseIterator rend = ll.rend();
@@ -20,9 +19,9 @@ TEST_F(TestLinkListReverseIterator, testReverseIterInitialState) {
 }
 
 TEST_F(TestLinkListReverseIterator, testReverseIterator) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   IntLL ll;
-    EXPECT_NE(nullptr, ll.insert(1));
+  EXPECT_NE(nullptr, ll.insert(1));
   IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 1);
@@ -38,10 +37,10 @@ TEST_F(TestLinkListReverseIterator, testReverseIterator) {
 }
 
 TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   IntLL ll;
-    EXPECT_NE(nullptr, ll.insert(1));
-    EXPECT_NE(nullptr, ll.insert(2));
+  EXPECT_NE(nullptr, ll.insert(1));
+  EXPECT_NE(nullptr, ll.insert(2));
   IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 2);
@@ -59,11 +58,11 @@ TEST_F(TestLinkListReverseIterator, testReverseIter2Elements) {
 }
 
 TEST_F(TestLinkListReverseIterator, testInsertAtMiddle) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   IntLL ll;
-    EXPECT_NE(nullptr, ll.insert(1));
-    EXPECT_NE(nullptr, ll.insert(3));
-    EXPECT_NE(nullptr, ll.insert(2));
+  EXPECT_NE(nullptr, ll.insert(1));
+  EXPECT_NE(nullptr, ll.insert(3));
+  EXPECT_NE(nullptr, ll.insert(2));
   IntLL::ReverseIterator rbegin = ll.rbegin();
   ASSERT_NE(rbegin, ll.rend());
   ASSERT_EQ(rbegin->get(), 3);

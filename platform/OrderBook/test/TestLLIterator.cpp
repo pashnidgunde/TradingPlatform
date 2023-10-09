@@ -6,12 +6,11 @@ using namespace platform;
 class TestLinkListIterator : public ::testing::Test {
 protected:
   void SetUp() override {}
-
   void TearDown() override {}
 };
 
 TEST_F(TestLinkListIterator, testInitialState) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   auto ll = IntLL{};
   IntLL::Iterator begin = ll.begin();
   IntLL::Iterator end = ll.end();
@@ -20,7 +19,7 @@ TEST_F(TestLinkListIterator, testInitialState) {
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   IntLL ll;
   EXPECT_NE(nullptr, ll.insert(1));
   IntLL::Iterator begin = ll.begin();
@@ -38,10 +37,10 @@ TEST_F(TestLinkListIterator, testForwardIterator) {
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
-    using IntLL = LinkedList<int,std::less<>>;
-    IntLL ll{};
-    EXPECT_NE(nullptr, ll.insert(1));
-    EXPECT_NE(nullptr, ll.insert(2));
+  using IntLL = LinkedList<int, std::less<>>;
+  IntLL ll{};
+  EXPECT_NE(nullptr, ll.insert(1));
+  EXPECT_NE(nullptr, ll.insert(2));
   IntLL::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);
@@ -59,11 +58,11 @@ TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
 }
 
 TEST_F(TestLinkListIterator, testInsertAtMiddle) {
-    using IntLL = LinkedList<int,std::less<>>;
+  using IntLL = LinkedList<int, std::less<>>;
   IntLL ll;
-    EXPECT_NE(nullptr, ll.insert(1));
-    EXPECT_NE(nullptr, ll.insert(3));
-    EXPECT_NE(nullptr, ll.insert(2));
+  EXPECT_NE(nullptr, ll.insert(1));
+  EXPECT_NE(nullptr, ll.insert(3));
+  EXPECT_NE(nullptr, ll.insert(2));
   IntLL::Iterator begin = ll.begin();
   ASSERT_NE(begin, ll.end());
   ASSERT_EQ(begin->get(), 1);

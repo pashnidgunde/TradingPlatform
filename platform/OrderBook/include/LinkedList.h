@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm>
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 #include "NodePool.h"
 
@@ -24,11 +24,11 @@ public:
     NodePtr operator*() const { return node; }
     NodePtr operator->() const { return node; }
     explicit operator NodePtr() const { return node; }
-    explicit operator bool () const { return node != nullptr; }
-    bool operator== (const IteratorBase& rhs) const {
+    explicit operator bool() const { return node != nullptr; }
+    bool operator==(const IteratorBase &rhs) const {
       return this->node == rhs.node;
     }
-    bool operator!= (const IteratorBase& rhs) const {
+    bool operator!=(const IteratorBase &rhs) const {
       return this->node != rhs.node;
     }
 
@@ -37,8 +37,7 @@ public:
 
   class Iterator : public IteratorBase {
   public:
-    explicit Iterator(NodePtr other) : IteratorBase(other)
-    {}
+    explicit Iterator(NodePtr other) : IteratorBase(other) {}
     Iterator &operator++() {
       this->node = this->node->next;
       return *this;
@@ -81,13 +80,13 @@ public:
   }
 
   void removeIf(const std::function<bool(NodePtr node)> fn) {
-      NodePtr prev = nullptr;
-      while (head && fn(head)) {
-          prev = head;
-          head = head->next;
-          delete prev;
-          sz--;
-      }
+    NodePtr prev = nullptr;
+    while (head && fn(head)) {
+      prev = head;
+      head = head->next;
+      delete prev;
+      sz--;
+    }
   }
 
   size_t size() const { return sz; }
@@ -128,7 +127,7 @@ private:
   }
 
 private:
-    NodePool<T, 1024> pool;
+  NodePool<T, 1024> pool;
   NodePtr head = nullptr;
   NodePtr tail = nullptr;
   size_t sz = 0;

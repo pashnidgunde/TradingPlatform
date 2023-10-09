@@ -7,8 +7,8 @@
 #pragma pack(push, 1)
 namespace platform {
 struct Order {
-    static constexpr char BUY = 'B';
-    static constexpr char SELL = 'S';
+  static constexpr char BUY = 'B';
+  static constexpr char SELL = 'S';
 
   Order(int uId, int oId, int p, int q, char s, char *sym)
       : mf(uId, oId, p, q), side(s) {
