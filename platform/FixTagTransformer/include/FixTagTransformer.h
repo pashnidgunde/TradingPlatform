@@ -44,73 +44,76 @@ namespace x3 = boost::spirit::x3;
 // };
 
 struct Statement {
-  explicit Statement(std::string message) : _message(std::move(message)) {}
+    explicit Statement(std::string message)
+        : _message(std::move(message))
+    {
+    }
 
-  std::string _message;
+    std::string _message;
 
-  [[nodiscard]] bool apply(const std::string &rule) {
-    using boost::spirit::x3::ascii::space_type;
-    using x3::_attr;
-    using x3::alnum;
-    using x3::char_;
-    using x3::uint_;
-    space_type space;
+    [[nodiscard]] bool apply(const std::string& rule)
+    {
+        using boost::spirit::x3::ascii::space_type;
+        using x3::_attr;
+        using x3::alnum;
+        using x3::char_;
+        using x3::uint_;
+        space_type space;
 
-    const auto begin = _message.begin();
+        const auto begin = _message.begin();
 
-    auto tag_start = std::string::npos;
-    auto value_start = std::string::npos;
-    auto value_end = std::string::npos;
-    auto tag_end = std::string::npos;
+        auto tag_start = std::string::npos;
+        auto value_start = std::string::npos;
+        auto value_end = std::string::npos;
+        auto tag_end = std::string::npos;
 
-    auto tag = [&](auto &tag) {
-      const auto &tag_number = _attr(tag);
-      tag_start = _message.find(tag_number);
-      if (tag_start == std::string::npos) {
-        tag_start = _message.size();
-        _message += tag_number + '=';
-        return;
-      }
-      value_start = tag_start + tag_number.size() + 1;
-      value_end = _message.find_first_of(';', value_start);
-      tag_end = value_end + 1;
-    };
+        auto tag = [&](auto& tag) {
+            const auto& tag_number = _attr(tag);
+            tag_start = _message.find(tag_number);
+            if (tag_start == std::string::npos) {
+                tag_start = _message.size();
+                _message += tag_number + '=';
+                return;
+            }
+            value_start = tag_start + tag_number.size() + 1;
+            value_end = _message.find_first_of(';', value_start);
+            tag_end = value_end + 1;
+        };
 
-    auto value = [&](auto &value) {
-      const auto &tag_value = _attr(value);
-      // std::cout << "Value :" << _attr(value) << typeid(_attr(value)).name()
-      // << "\n";
-      if (_message.back() == '=') {
-        if (!tag_value.empty()) {
-          _message += tag_value + ";";
-        } else {
-          _message.erase(begin + tag_start, _message.end());
-        }
-        return;
-      }
+        auto value = [&](auto& value) {
+            const auto& tag_value = _attr(value);
+            // std::cout << "Value :" << _attr(value) << typeid(_attr(value)).name()
+            // << "\n";
+            if (_message.back() == '=') {
+                if (!tag_value.empty()) {
+                    _message += tag_value + ";";
+                } else {
+                    _message.erase(begin + tag_start, _message.end());
+                }
+                return;
+            }
 
-      if (tag_value.empty()) {
-        _message.erase(begin + tag_start, begin + tag_end);
-      } else {
-        _message.replace(begin + value_start, begin + value_end, tag_value);
-      }
-    };
+            if (tag_value.empty()) {
+                _message.erase(begin + tag_start, begin + tag_end);
+            } else {
+                _message.replace(begin + value_start, begin + value_end, tag_value);
+            }
+        };
 
-    auto statement_rule =
-        (+(char_ - '='))[tag] >> '=' >> (*(char_ - ';'))[value] >> ';';
-    // auto statement = ((+(char_ - '=')) >> char_('='))[tag] >> (+(char_ -
-    // ';'))[value] >> ';';
+        auto statement_rule = (+(char_ - '='))[tag] >> '=' >> (*(char_ - ';'))[value] >> ';';
+        // auto statement = ((+(char_ - '=')) >> char_('='))[tag] >> (+(char_ -
+        // ';'))[value] >> ';';
 
-    auto rule_begin = rule.begin();
-    auto rule_end = rule.end();
-    bool r = x3::phrase_parse(rule_begin, rule_end, statement_rule, space);
+        auto rule_begin = rule.begin();
+        auto rule_end = rule.end();
+        bool r = x3::phrase_parse(rule_begin, rule_end, statement_rule, space);
 
-    if (rule_begin != rule_end) // fail if we did not get a full match
-      return false;
-    return r;
-  }
+        if (rule_begin != rule_end) // fail if we did not get a full match
+            return false;
+        return r;
+    }
 
-  [[nodiscard]] const std::string &applied() const { return _message; }
+    [[nodiscard]] const std::string& applied() const { return _message; }
 };
 
 // struct FixTagTransformer {
