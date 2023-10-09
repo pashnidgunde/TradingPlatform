@@ -9,6 +9,6 @@ struct Match {
   int qty;
 
   Match(OrderIdentifier b, OrderIdentifier s, int price, int qty)
-      : buyer(std::move(b)), seller(std::move(s)), price(price), qty(qty) {}
+      : buyer(b), seller(s), price(price), qty(qty) {}
 };
 } // namespace platform
