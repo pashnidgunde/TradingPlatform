@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <functional>
+
 #include "NodePool.h"
 
 namespace platform {
