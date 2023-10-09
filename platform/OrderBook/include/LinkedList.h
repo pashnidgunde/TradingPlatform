@@ -63,7 +63,7 @@ public:
     }
   };
 
-  bool isEmpty() const { return head == nullptr; }
+  [[nodiscard]] bool isEmpty() const { return head == nullptr; }
 
   [[nodiscard]] NodePtr insert(T data) {
     auto node = new Node<T>();
@@ -80,16 +80,15 @@ public:
   }
 
   void removeIf(const std::function<bool(NodePtr node)> fn) {
-    NodePtr prev = nullptr;
     while (head && fn(head)) {
-      prev = head;
+      NodePtr prev = head;
       head = head->next;
       delete prev;
       sz--;
     }
   }
 
-  size_t size() const { return sz; }
+  [[nodiscard]] size_t size() const { return sz; }
   Iterator begin() { return Iterator(head); };
   Iterator end() { return Iterator(nullptr); }
   ReverseIterator rbegin() { return ReverseIterator(tail); }
