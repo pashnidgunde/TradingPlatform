@@ -66,7 +66,7 @@ public:
   [[nodiscard]] bool isEmpty() const { return head == nullptr; }
 
   [[nodiscard]] NodePtr insert(T data) {
-    auto node = new Node<T>();
+    auto node = pool.get();
     node->value = std::move(data);
     if (!head) {
       head = node;
@@ -83,7 +83,7 @@ public:
     while (head && fn(head)) {
       NodePtr prev = head;
       head = head->next;
-      delete prev;
+      pool.put(prev);
       sz--;
     }
   }

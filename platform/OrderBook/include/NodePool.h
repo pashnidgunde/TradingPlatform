@@ -15,14 +15,14 @@ template <typename T> struct Node {
 
 template <typename T, size_t SIZE> struct NodePool {
   NodePool() {
-    head = new Node<T>();
-    auto prev = head;
-    for (size_t i = 0; i < SIZE - 1; ++i) {
-      auto nn = new Node<T>();
-      prev->next = nn;
-      prev = nn;
+    try {
+      for (size_t i = 0; i < SIZE; ++i) {
+        this->put(new Node<T>());
+      }
     }
-    tail = prev;
+    catch(const std::bad_alloc& ){
+      throw std::runtime_error("Failed to allocate node pool");
+    }
   }
 
   Node<T> *get() {
@@ -32,6 +32,10 @@ template <typename T, size_t SIZE> struct NodePool {
     }
     auto node = head;
     head = head->next;
+
+    node->next = nullptr;
+    node->prev = nullptr;
+
     return node;
   }
 
@@ -40,7 +44,8 @@ template <typename T, size_t SIZE> struct NodePool {
       tail->next = node;
       tail = tail->next;
     } else {
-      head = tail;
+      head = node;
+      tail = node;
     }
   }
 
