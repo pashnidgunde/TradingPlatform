@@ -3,9 +3,9 @@
 #include <unordered_map>
 
 #include "LinkedList.h"
-#include "Match.h"
 #include "Order.h"
 #include "OrderBookFields.h"
+#include "OutgoingEvents.h"
 
 namespace platform {
 
@@ -16,7 +16,7 @@ struct OrderBook {
 
   using BuyNode = BuyOrders::value_type;
   using SellNode = SellOrders::value_type;
-  using Matches = std::list<platform::Match>;
+  using Trades = std::list<platform::Trade>;
 
   [[nodiscard]] bool isEmpty() const { return book.empty(); }
 
@@ -42,7 +42,7 @@ struct OrderBook {
     sellOrders(symbol).removeIf(removeCondition);
   }
 
-  Matches tryMatch(const std::string& symbol /*, char triggeredBy*/) {
+  Trades tryCross(const std::string& symbol /*, char triggeredBy*/) {
     auto adjustQty = [](OrderBookFields& of, int qty) { of.qty -= qty; };
 
     auto filled = [](OrderBookFields& of) { return of.qty == 0; };
@@ -51,7 +51,7 @@ struct OrderBook {
       return buy.price >= sell.price;
     };
 
-    Matches matches;
+    Trades trades;
     auto matchQty = 0;
     auto matchPrice = 0;
     for (auto buyIter : buyOrders(symbol)) {
@@ -61,7 +61,7 @@ struct OrderBook {
         if (canMatch(buy, sell)) {
           matchQty = std::min(buy.qty, sell.qty);
           matchPrice = std::max(buy.price, sell.price);
-          matches.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
+          trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
           adjustQty(buy, matchQty);
           adjustQty(sell, matchQty);
           if (filled(buy)) {
@@ -71,7 +71,7 @@ struct OrderBook {
       }
     }
     this->removeFilled(symbol);
-    return matches;
+    return trades;
   }
 };
 }  // namespace platform

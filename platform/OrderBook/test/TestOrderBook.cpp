@@ -109,7 +109,7 @@ TEST_F(TestOrderBook, testNoMatch) {
     b.addBuy("IBM", OrderBookFields(i, i, 10, 10));
   }
   b.addSell("IBM", OrderBookFields(1, 1, 11, 100));
-  auto matches = b.tryMatch("IBM");
+  auto matches = b.tryCross("IBM");
 
   EXPECT_EQ(matches.size(), 0);
 
@@ -134,7 +134,7 @@ TEST_F(TestOrderBook, testSellSweep) {
     b.addSell("IBM", OrderBookFields(i, i, 10, 10));
   }
   b.addBuy("IBM", OrderBookFields(1, 1, 11, 100));
-  auto matches = b.tryMatch("IBM");
+  auto matches = b.tryCross("IBM");
 
   EXPECT_EQ(matches.size(), 10);
 
@@ -158,7 +158,7 @@ TEST_F(TestOrderBook, testBuySweep) {
     b.addBuy("IBM", OrderBookFields(i, i, 10, 10));
   }
   b.addSell("IBM", OrderBookFields(1, 1, 9, 100));
-  auto matches = b.tryMatch("IBM");
+  auto matches = b.tryCross("IBM");
 
   EXPECT_EQ(matches.size(), 10);
   auto& buys = b.buyOrders("IBM");
@@ -190,16 +190,16 @@ TEST_F(TestOrderBook, testRemove) {
   b.addBuy("IBM", OrderBookFields(1, 1, 20, 10));
 
   b.addSell("IBM", OrderBookFields(1, 1, 20, 10));
-  auto matches = b.tryMatch("IBM");
+  auto matches = b.tryCross("IBM");
   EXPECT_EQ(matches.size(), 1);
 
   auto node = b.addSell("IBM", OrderBookFields(1, 1, 16, 55));
-  matches = b.tryMatch("IBM");
+  matches = b.tryCross("IBM");
   EXPECT_EQ(matches.size(), 4);
   EXPECT_EQ(node->get().qty, 15);
 
   node = b.addSell("IBM", OrderBookFields(1, 1, 10, 500));
-  matches = b.tryMatch("IBM");
+  matches = b.tryCross("IBM");
   EXPECT_EQ(matches.size(), 5);
   EXPECT_EQ(node->get().qty, 450);
   EXPECT_EQ(b.buyOrders("IBM").size(), 0);

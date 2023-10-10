@@ -4,10 +4,12 @@ add_library (${PROJECT_NAME}
     include/LinkedList.h
         include/OrderBookFields.h
     include/OrderBook.h
-    OrderBook.cpp
+        OrderBookHandler.cpp
     include/Order.h
-        include/Match.h
+        include/OutgoingEvents.h
         include/NodePool.h
+        include/OrderBookHandler.h
+        include/IncomingEvents.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)
