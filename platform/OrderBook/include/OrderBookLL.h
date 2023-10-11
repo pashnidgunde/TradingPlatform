@@ -12,7 +12,7 @@
 namespace platform {
 
     template<size_t SIZE = 1024>
-    struct OrderBook {
+    struct OrderBookLL {
         using BuyOrders = OrderedLinkedList<OrderBookFields, std::greater<> >;
         using SellOrders = OrderedLinkedList<OrderBookFields, std::less<> >;
         using SymbolId = uint16_t;
