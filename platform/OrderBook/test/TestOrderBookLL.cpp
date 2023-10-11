@@ -6,20 +6,20 @@
 
 using namespace platform;
 
-class TestOrderBook : public ::testing::Test {
+class TestOrderBookLL : public ::testing::Test {
 protected:
     void SetUp() override {}
 
     void TearDown() override {}
 };
 
-TEST_F(TestOrderBook, IsEmptyInitially) {
+TEST_F(TestOrderBookLL, IsEmptyInitially) {
     auto orderBook = std::make_unique<OrderBookLL<>>();
     EXPECT_TRUE(orderBook->buyOrders(0).isEmpty());
     EXPECT_TRUE(orderBook->sellOrders(0).isEmpty());
 }
 
-TEST_F(TestOrderBook, testOrderConstructor) {
+TEST_F(TestOrderBookLL, testOrderConstructor) {
     OrderBookLL b;
     EXPECT_TRUE(b.buyOrders(0).isEmpty());
     EXPECT_TRUE(b.sellOrders(0).isEmpty());
@@ -37,7 +37,7 @@ TEST_F(TestOrderBook, testOrderConstructor) {
     EXPECT_EQ(b.sellOrders(0).size(), 3);
 }
 
-TEST_F(TestOrderBook, testBuyOrdering) {
+TEST_F(TestOrderBookLL, testBuyOrdering) {
     OrderBookLL b;
     std::string symbol{0};
     std::random_device seed;
@@ -67,7 +67,7 @@ TEST_F(TestOrderBook, testBuyOrdering) {
     EXPECT_EQ(inputs, actual);
 }
 
-TEST_F(TestOrderBook, testSellOrdering) {
+TEST_F(TestOrderBookLL, testSellOrdering) {
     OrderBookLL b;
     std::string symbol{0};
     std::random_device seed;
@@ -98,7 +98,7 @@ TEST_F(TestOrderBook, testSellOrdering) {
     EXPECT_EQ(inputs, actual);
 }
 
-TEST_F(TestOrderBook, testNoMatch) {
+TEST_F(TestOrderBookLL, testNoMatch) {
     OrderBookLL b;
     std::string symbol{0};
     std::vector<OrderBookFields> inputs;
@@ -122,7 +122,7 @@ TEST_F(TestOrderBook, testNoMatch) {
     }
 }
 
-TEST_F(TestOrderBook, testSellSweep) {
+TEST_F(TestOrderBookLL, testSellSweep) {
     OrderBookLL b;
     std::vector<OrderBookFields> inputs;
     inputs.reserve(10);
@@ -144,7 +144,7 @@ TEST_F(TestOrderBook, testSellSweep) {
     }
 }
 
-TEST_F(TestOrderBook, testBuySweep) {
+TEST_F(TestOrderBookLL, testBuySweep) {
     OrderBookLL b;
     std::string symbol{0};
     std::vector<OrderBookFields> inputs;
@@ -166,7 +166,7 @@ TEST_F(TestOrderBook, testBuySweep) {
     }
 }
 
-TEST_F(TestOrderBook, testRemove) {
+TEST_F(TestOrderBookLL, testRemove) {
     OrderBookLL b;
     std::vector<OrderBookFields> inputs;
     inputs.reserve(10);
