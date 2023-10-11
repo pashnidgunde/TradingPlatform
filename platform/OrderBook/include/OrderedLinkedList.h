@@ -9,7 +9,7 @@
 namespace platform {
 
 template <typename T, typename Comp>
-struct LinkedList {
+struct OrderedLinkedList {
  public:
   using NodePtr = Node<T>*;
   using value_type = NodePtr;

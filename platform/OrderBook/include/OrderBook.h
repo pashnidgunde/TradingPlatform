@@ -4,7 +4,7 @@
 #include <list>
 #include <unordered_map>
 
-#include "LinkedList.h"
+#include "OrderedLinkedList.h"
 #include "Order.h"
 #include "OrderBookFields.h"
 #include "OutgoingEvents.h"
@@ -13,8 +13,8 @@ namespace platform {
 
     template<size_t SIZE = 1024>
     struct OrderBook {
-        using BuyOrders = LinkedList<OrderBookFields, std::greater<> >;
-        using SellOrders = LinkedList<OrderBookFields, std::less<> >;
+        using BuyOrders = OrderedLinkedList<OrderBookFields, std::greater<> >;
+        using SellOrders = OrderedLinkedList<OrderBookFields, std::less<> >;
         using SymbolId = uint16_t;
 
         std::array<BuyOrders, SIZE> buys;

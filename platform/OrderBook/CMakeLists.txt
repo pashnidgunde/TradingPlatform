@@ -1,7 +1,7 @@
 project(OrderBook LANGUAGES CXX)
 
 add_library(${PROJECT_NAME}
-        include/LinkedList.h
+        include/OrderedLinkedList.h
         include/OrderBookFields.h
         include/OrderBook.h
         include/Order.h

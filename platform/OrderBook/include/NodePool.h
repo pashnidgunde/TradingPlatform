@@ -1,56 +1,58 @@
 #pragma once
 
 #include <cstddef>
-#include "LinkedList.h"
+#include "OrderedLinkedList.h"
 
 namespace platform {
 
-template <typename T>
-struct Node {
-  Node* prev = nullptr;
-  T value{};
-  Node* next = nullptr;
-  T& get() { return value; }
-  const T& get() const { return value; }
-};
+    template<typename T>
+    struct Node {
+        Node *prev = nullptr;
+        T value{};
+        Node *next = nullptr;
 
-template <typename T, size_t SIZE>
-struct NodePool {
-  NodePool() {
-    try {
-      for (size_t i = 0; i < SIZE; ++i) {
-        this->put(new Node<T>());
-      }
-    } catch (const std::bad_alloc&) {
-      throw std::runtime_error("Failed to allocate node pool");
-    }
-  }
+        T &get() { return value; }
 
-  Node<T>* get() {
-    if (!head) {
-      head = new Node<T>();
-      return head;
-    }
-    auto node = head;
-    head = head->next;
+        const T &get() const { return value; }
+    };
 
-    node->next = nullptr;
-    node->prev = nullptr;
+    template<typename T, size_t SIZE>
+    struct NodePool {
+        NodePool() {
+            try {
+                for (size_t i = 0; i < SIZE; ++i) {
+                    this->put(new Node<T>());
+                }
+            } catch (const std::bad_alloc &) {
+                throw std::runtime_error("Failed to allocate node pool");
+            }
+        }
 
-    return node;
-  }
+        Node<T> *get() {
+            if (!head) {
+                head = new Node<T>();
+                return head;
+            }
+            auto node = head;
+            head = head->next;
 
-  void put(Node<T>* node) {
-    if (tail) {
-      tail->next = node;
-      tail = tail->next;
-    } else {
-      head = node;
-      tail = node;
-    }
-  }
+            node->next = nullptr;
+            node->prev = nullptr;
 
-  Node<T>* head = nullptr;
-  Node<T>* tail = nullptr;
-};
+            return node;
+        }
+
+        void put(Node<T> *node) {
+            if (tail) {
+                tail->next = node;
+                tail = tail->next;
+            } else {
+                head = node;
+                tail = node;
+            }
+        }
+
+        Node<T> *head = nullptr;
+        Node<T> *tail = nullptr;
+    };
 }  // namespace platform
