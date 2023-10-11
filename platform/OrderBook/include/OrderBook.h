@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <list>
 #include <unordered_map>
 
@@ -9,40 +10,42 @@
 
 namespace platform {
 
+template <size_t SIZE=1024>
 struct OrderBook {
   using BuyOrders = LinkedList<OrderBookFields, std::greater<> >;
   using SellOrders = LinkedList<OrderBookFields, std::less<> >;
-  std::unordered_map<std::string, std::pair<BuyOrders, SellOrders> > book;
+  using SymbolId = uint16_t;
+
+  std::array <BuyOrders, SIZE> buys;
+  std::array <SellOrders, SIZE> sells;
 
   using BuyNode = BuyOrders::value_type;
   using SellNode = SellOrders::value_type;
   using Trades = std::list<platform::Trade>;
 
-  [[nodiscard]] bool isEmpty() const { return book.empty(); }
+  BuyOrders& buyOrders(const SymbolId sid) { return buys[sid]; }
 
-  BuyOrders& buyOrders(const std::string& symbol) { return book[symbol].first; }
-
-  SellOrders& sellOrders(const std::string& symbol) {
-    return book[symbol].second;
+  SellOrders& sellOrders(const SymbolId sid) {
+    return sells[sid];
   }
 
-  BuyNode addBuy(const std::string& symbol, OrderBookFields fields) {
-    return buyOrders(symbol).insert(fields);
+  BuyNode addBuy(const SymbolId sid, const OrderBookFields& fields) {
+    return buyOrders(sid).insert(fields);
   }
 
-  SellNode addSell(const std::string& symbol, const OrderBookFields& fields) {
-    return sellOrders(symbol).insert(fields);
+  SellNode addSell(const SymbolId sid, const OrderBookFields& fields) {
+    return sellOrders(sid).insert(fields);
   }
 
-  void removeFilled(const std::string& symbol) {
+  void removeFilled(const SymbolId sid) {
     auto removeCondition = [](const Node<OrderBookFields>* node) {
       return node->get().qty == 0;
     };
-    buyOrders(symbol).removeIf(removeCondition);
-    sellOrders(symbol).removeIf(removeCondition);
+    buyOrders(sid).removeIf(removeCondition);
+    sellOrders(sid).removeIf(removeCondition);
   }
 
-  Trades tryCross(const std::string& symbol /*, char triggeredBy*/) {
+  Trades tryCross(const SymbolId sid /*, char triggeredBy*/) {
     auto adjustQty = [](OrderBookFields& of, int qty) { of.qty -= qty; };
 
     auto filled = [](OrderBookFields& of) { return of.qty == 0; };
@@ -54,8 +57,8 @@ struct OrderBook {
     Trades trades;
     auto matchQty = 0;
     auto matchPrice = 0;
-    for (auto buyIter : buyOrders(symbol)) {
-      for (auto sellIter : sellOrders(symbol)) {
+    for (auto buyIter : buyOrders(sid)) {
+      for (auto sellIter : sellOrders(sid)) {
         auto& buy = buyIter->get();
         auto& sell = sellIter->get();
         if (canMatch(buy, sell)) {
@@ -70,7 +73,7 @@ struct OrderBook {
         }
       }
     }
-    this->removeFilled(symbol);
+    this->removeFilled(sid);
     return trades;
   }
 };

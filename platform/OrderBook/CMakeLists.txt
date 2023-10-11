@@ -10,6 +10,7 @@ add_library (${PROJECT_NAME}
         include/NodePool.h
         include/OrderBookHandler.h
         include/IncomingEvents.h
+        ../../services/client/Client.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)
