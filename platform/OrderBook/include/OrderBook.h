@@ -1,4 +1,6 @@
 #pragma once
+
+#include <array>
 #include <list>
 #include <unordered_map>
 
@@ -9,69 +11,71 @@
 
 namespace platform {
 
-struct OrderBook {
-  using BuyOrders = LinkedList<OrderBookFields, std::greater<> >;
-  using SellOrders = LinkedList<OrderBookFields, std::less<> >;
-  std::unordered_map<std::string, std::pair<BuyOrders, SellOrders> > book;
+    template<size_t SIZE = 1024>
+    struct OrderBook {
+        using BuyOrders = LinkedList<OrderBookFields, std::greater<> >;
+        using SellOrders = LinkedList<OrderBookFields, std::less<> >;
+        using SymbolId = uint16_t;
 
-  using BuyNode = BuyOrders::value_type;
-  using SellNode = SellOrders::value_type;
-  using Trades = std::list<platform::Trade>;
+        std::array<BuyOrders, SIZE> buys;
+        std::array<SellOrders, SIZE> sells;
 
-  [[nodiscard]] bool isEmpty() const { return book.empty(); }
+        using BuyNode = BuyOrders::value_type;
+        using SellNode = SellOrders::value_type;
+        using Trades = std::list<platform::Trade>;
 
-  BuyOrders& buyOrders(const std::string& symbol) { return book[symbol].first; }
+        BuyOrders &buyOrders(const SymbolId sid) { return buys[sid]; }
 
-  SellOrders& sellOrders(const std::string& symbol) {
-    return book[symbol].second;
-  }
-
-  BuyNode addBuy(const std::string& symbol, OrderBookFields fields) {
-    return buyOrders(symbol).insert(fields);
-  }
-
-  SellNode addSell(const std::string& symbol, const OrderBookFields& fields) {
-    return sellOrders(symbol).insert(fields);
-  }
-
-  void removeFilled(const std::string& symbol) {
-    auto removeCondition = [](const Node<OrderBookFields>* node) {
-      return node->get().qty == 0;
-    };
-    buyOrders(symbol).removeIf(removeCondition);
-    sellOrders(symbol).removeIf(removeCondition);
-  }
-
-  Trades tryCross(const std::string& symbol /*, char triggeredBy*/) {
-    auto adjustQty = [](OrderBookFields& of, int qty) { of.qty -= qty; };
-
-    auto filled = [](OrderBookFields& of) { return of.qty == 0; };
-
-    auto canMatch = [](const auto& buy, const auto& sell) {
-      return buy.price >= sell.price;
-    };
-
-    Trades trades;
-    auto matchQty = 0;
-    auto matchPrice = 0;
-    for (auto buyIter : buyOrders(symbol)) {
-      for (auto sellIter : sellOrders(symbol)) {
-        auto& buy = buyIter->get();
-        auto& sell = sellIter->get();
-        if (canMatch(buy, sell)) {
-          matchQty = std::min(buy.qty, sell.qty);
-          matchPrice = std::max(buy.price, sell.price);
-          trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
-          adjustQty(buy, matchQty);
-          adjustQty(sell, matchQty);
-          if (filled(buy)) {
-            break;
-          }
+        SellOrders &sellOrders(const SymbolId sid) {
+            return sells[sid];
         }
-      }
-    }
-    this->removeFilled(symbol);
-    return trades;
-  }
-};
+
+        BuyNode addBuy(const SymbolId sid, const OrderBookFields &fields) {
+            return buyOrders(sid).insert(fields);
+        }
+
+        SellNode addSell(const SymbolId sid, const OrderBookFields &fields) {
+            return sellOrders(sid).insert(fields);
+        }
+
+        void removeFilled(const SymbolId sid) {
+            auto removeCondition = [](const Node<OrderBookFields> *node) {
+                return node->get().qty == 0;
+            };
+            buyOrders(sid).removeIf(removeCondition);
+            sellOrders(sid).removeIf(removeCondition);
+        }
+
+        Trades tryCross(const SymbolId sid /*, char triggeredBy*/) {
+            auto adjustQty = [](OrderBookFields &of, int qty) { of.qty -= qty; };
+
+            auto filled = [](OrderBookFields &of) { return of.qty == 0; };
+
+            auto canMatch = [](const auto &buy, const auto &sell) {
+                return buy.price >= sell.price;
+            };
+
+            Trades trades;
+            auto matchQty = 0;
+            auto matchPrice = 0;
+            for (auto buyIter: buyOrders(sid)) {
+                for (auto sellIter: sellOrders(sid)) {
+                    auto &buy = buyIter->get();
+                    auto &sell = sellIter->get();
+                    if (canMatch(buy, sell)) {
+                        matchQty = std::min(buy.qty, sell.qty);
+                        matchPrice = std::max(buy.price, sell.price);
+                        trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
+                        adjustQty(buy, matchQty);
+                        adjustQty(sell, matchQty);
+                        if (filled(buy)) {
+                            break;
+                        }
+                    }
+                }
+            }
+            this->removeFilled(sid);
+            return trades;
+        }
+    };
 }  // namespace platform

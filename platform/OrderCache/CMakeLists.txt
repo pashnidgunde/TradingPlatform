@@ -1,11 +1,11 @@
-project (OrderCache LANGUAGES CXX)
+project(OrderCache LANGUAGES CXX)
 
 find_package(Boost REQUIRED)
 include_directories(./include)
-add_library (OrderCache
-  ./include/OrderCache.h
-  ./include/OrderCacheImpl.h
-  ./OrderCacheImpl.cpp)
+add_library(${PROJECT_NAME}
+        ./include/OrderCache.h
+        ./include/OrderCacheImpl.h
+        ./OrderCacheImpl.cpp)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 link_directories(${PROJECT_NAME} {Boost_LIBRARY_DIRS})

@@ -1,25 +1,22 @@
 #pragma once
 
 #include <cstring>
+#include <cstdint>
 #include "OrderBookFields.h"
 
-// Assumes that symbol length is 32 bit
-#pragma pack(push, 1)
 namespace platform {
 struct Order {
   static constexpr char BUY = 'B';
   static constexpr char SELL = 'S';
 
-  Order(int uId, int oId, int p, int q, char s, char* sym)
-      : mf(uId, oId, p, q), side(s) {
-    memcpy(symbol, sym, sizeof symbol);
+  Order(int uId, int oId, int p, int q, char s, uint16_t sym)
+      : mf(uId, oId, p, q), side(s), sid(sym) {
   }
 
   platform::OrderBookFields mf;
   char side = 'B';
-  char symbol[32]{};
+  uint16_t sid = -1;
 };
-static_assert(sizeof(Order) == 49);
+static_assert(sizeof(Order) == 20);
 }  // namespace platform
 
-#pragma pack(pop)

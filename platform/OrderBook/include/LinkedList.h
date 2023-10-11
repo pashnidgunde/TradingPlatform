@@ -66,7 +66,7 @@ struct LinkedList {
 
   [[nodiscard]] bool isEmpty() const { return head == nullptr; }
 
-  [[nodiscard]] NodePtr insert(T data) {
+  [[nodiscard]] NodePtr insert(const T& data) {
     auto node = pool.get();
     node->value = std::move(data);
     if (!head) {
