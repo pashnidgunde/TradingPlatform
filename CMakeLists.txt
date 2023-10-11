@@ -1,5 +1,5 @@
-cmake_minimum_required (VERSION 3.22)
-project (TradingPlatform LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.22)
+project(TradingPlatform LANGUAGES CXX)
 
 include(CTest)
 enable_testing()

@@ -1,16 +1,15 @@
-project (OrderBook LANGUAGES CXX)
+project(OrderBook LANGUAGES CXX)
 
-add_library (${PROJECT_NAME}
-    include/LinkedList.h
+add_library(${PROJECT_NAME}
+        include/LinkedList.h
         include/OrderBookFields.h
-    include/OrderBook.h
-        OrderBookHandler.cpp
-    include/Order.h
+        include/OrderBook.h
+        include/Order.h
         include/OutgoingEvents.h
         include/NodePool.h
         include/OrderBookHandler.h
         include/IncomingEvents.h
-        ../../services/client/Client.cpp
+        OrderBookHandler.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)

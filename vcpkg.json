@@ -16,7 +16,7 @@
     },
     {
       "name": "boost-asio",
-      "version>=": "1.82.0"
+      "version>=": "1.81.0"
     }
   ],
   "builtin-baseline": "4a600e9fea71bd7872080cbb716797e04d30e6d3"
