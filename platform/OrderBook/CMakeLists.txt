@@ -10,6 +10,8 @@ add_library(${PROJECT_NAME}
         include/OrderBookHandler.h
         include/IncomingEvents.h
         OrderBookHandler.cpp
+        include/OrderBook.h
+        include/LinkedList.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)

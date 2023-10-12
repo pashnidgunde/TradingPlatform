@@ -8,6 +8,7 @@ add_executable(${PROJECT_NAME}
         TestLLIterator.cpp
         TestReverseIterator.cpp
         TestOrderedByGreater.cpp
+        TestOrderBook.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../include)

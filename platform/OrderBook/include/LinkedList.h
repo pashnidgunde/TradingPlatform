@@ -8,8 +8,8 @@
 
 namespace platform {
 
-    template<typename T, typename Comp>
-    struct OrderedLinkedList {
+    template<typename T>
+    struct LinkedList {
     public:
         using NodePtr = Node<T> *;
         using value_type = NodePtr;
@@ -81,13 +81,15 @@ namespace platform {
 
         [[nodiscard]] NodePtr insert(const T &data) {
             auto node = pool.get();
-            node->value = std::move(data);
+            node->value = data;
             if (!head) {
                 head = node;
                 tail = head;
                 sz = 1;
             } else {
-                this->comparedInsert(node);
+                tail->next = node;
+                node->prev = tail;
+                tail = node;
                 sz++;
             }
             return node;
@@ -112,43 +114,14 @@ namespace platform {
 
         ReverseIterator rend() { return ReverseIterator(nullptr); }
 
-    private:
-        void comparedInsert(NodePtr nn) {
-            // should insert at start ?
-            if (compare(nn->value, head->value)) {
-                nn->next = head;
-                head->prev = nn;
-                head = nn;
-                return;
-            }
-
-            // should insert at end ?
-            if (compare(tail->value, nn->value) || tail->value == nn->value) {
-                tail->next = nn;
-                nn->prev = tail;
-                tail = nn;
-                return;
-            }
-
-            auto it = begin();
-            while (it) {
-                if (compare(nn->value, it->value)) {
-                    nn->next = *it;
-                    nn->prev = it->prev;
-                    nn->prev->next = nn;
-                    it->prev = nn;
-                    return;
-                }
-                it++;
-            }
-        }
+        const T &front() const { return head->get(); }
 
     private:
         NodePool<T, 1024> pool;
         NodePtr head = nullptr;
         NodePtr tail = nullptr;
         size_t sz = 0;
-        Comp compare{};
     };
 
 }  // namespace platform
+
