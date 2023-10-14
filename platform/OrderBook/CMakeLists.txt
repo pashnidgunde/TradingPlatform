@@ -7,9 +7,8 @@ add_library(${PROJECT_NAME}
         include/Order.h
         include/OutgoingEvents.h
         include/NodePool.h
-        include/OrderBookHandler.h
         include/IncomingEvents.h
-        OrderBookHandler.cpp
+        OrderBook.cpp
         include/OrderBook.h
         include/LinkedList.h
 )
