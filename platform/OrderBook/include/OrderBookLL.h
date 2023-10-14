@@ -22,7 +22,7 @@ namespace platform {
 
         using BuyNode = BuyOrders::value_type;
         using SellNode = SellOrders::value_type;
-        using Trades = std::list<platform::Trade>;
+
 
         BuyOrders &buyOrders(const SymbolId sid) { return buys[sid]; }
 
@@ -65,7 +65,7 @@ namespace platform {
                     if (canMatch(buy, sell)) {
                         matchQty = std::min(buy.qty, sell.qty);
                         matchPrice = std::max(buy.price, sell.price);
-                        trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
+                        trades.emplace_back(buy.oi,sell.oi, matchPrice, matchQty);
                         adjustQty(buy, matchQty);
                         adjustQty(sell, matchQty);
                         if (filled(buy)) {

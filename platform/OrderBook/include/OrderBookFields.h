@@ -17,9 +17,6 @@ struct OrderIdentifier {
   }
 
   bool operator!=(const OrderIdentifier& rhs) const { return !(rhs == *this); }
-
-  OrderIdentifier() = default;
-  OrderIdentifier(int uId, int oId) : userId(uId), orderId(oId) {}
 };
 
 struct OrderBookFields {
@@ -40,7 +37,7 @@ struct OrderBookFields {
 
   OrderBookFields() = default;
   OrderBookFields(int uId, int oId, int p, int q)
-      : oi(uId, oId), price(p), qty(q) {}
+      : oi{uId, oId}, price(p), qty(q) {}
 
   bool operator<(const OrderBookFields& rhs) const { return price < rhs.price; }
 

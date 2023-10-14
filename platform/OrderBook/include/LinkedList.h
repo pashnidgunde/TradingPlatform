@@ -54,7 +54,7 @@ namespace platform {
                 return *this;
             }
 
-            const Iterator operator++(int) {
+            Iterator operator++(int) {
                 Iterator old = *this;
                 this->node = this->node->next;
                 return old;
@@ -70,7 +70,7 @@ namespace platform {
                 return *this;
             }
 
-            const ReverseIterator operator++(int) {
+            ReverseIterator operator++(int) {
                 ReverseIterator old = *this;
                 this->node = this->node->prev;
                 return old;
@@ -95,6 +95,22 @@ namespace platform {
             return node;
         }
 
+        [[nodiscard]] NodePtr insert(T &&data) {
+            auto node = pool.get();
+            node->value = std::move(data);
+            if (!head) {
+                head = node;
+                tail = head;
+                sz = 1;
+            } else {
+                tail->next = node;
+                node->prev = tail;
+                tail = node;
+                sz++;
+            }
+            return node;
+        }
+
         void removeIf(const std::function<bool(NodePtr node)> fn) {
             while (head && fn(head)) {
                 NodePtr prev = head;
@@ -106,13 +122,13 @@ namespace platform {
 
         [[nodiscard]] size_t size() const { return sz; }
 
-        Iterator begin() { return Iterator(head); };
+        Iterator begin() const { return Iterator(head); };
 
-        Iterator end() { return Iterator(nullptr); }
+        Iterator end() const { return Iterator(nullptr); }
 
-        ReverseIterator rbegin() { return ReverseIterator(tail); }
+        ReverseIterator rbegin() const { return ReverseIterator(tail); }
 
-        ReverseIterator rend() { return ReverseIterator(nullptr); }
+        ReverseIterator rend() const { return ReverseIterator(nullptr); }
 
         const T &front() const { return head->get(); }
 
