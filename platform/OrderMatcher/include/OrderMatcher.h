@@ -7,7 +7,7 @@
 
 
 namespace platform {
-struct OrderBookHandler {
+struct OrderMatcher {
     void onEvent() {
 
     }
