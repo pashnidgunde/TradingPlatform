@@ -5,34 +5,28 @@
 #include <optional>
 #include <map>
 
+#include "WireFormat.h"
 #include "LinkedList.h"
 #include "OutgoingEvents.h"
 
-
-
-struct Side {
-    static constexpr char BUY = 'B';
-    static constexpr char SELL = 'S';
-};
-
-
 using namespace platform;
 
-struct OrderFields {
+struct MatchFields {
     OrderIdentifier oi{};
     Qty qty{};
 
-    bool operator==(const OrderFields &rhs) const {
+    bool operator==(const MatchFields &rhs) const {
         return oi == rhs.oi && qty == rhs.qty;
     }
 
-    bool operator!=(const OrderFields &rhs) const {
+    bool operator!=(const MatchFields &rhs) const {
         return !(rhs == *this);
     }
 };
 
+
 struct NewOrder {
-    OrderFields of;
+    MatchFields of;
     SymbolId symbol{};
     Price price{};
 
@@ -53,7 +47,7 @@ struct NewOrder {
 
 
 
-using FIFOOrderQueue = LinkedList<OrderFields>;
+using FIFOOrderQueue = LinkedList<MatchFields>;
 
 struct OrdersBySymbolId {
     template<char SIDE, typename T>
@@ -156,9 +150,9 @@ struct OrderBook {
     }
 
     void cross(FIFOOrderQueue& buys, FIFOOrderQueue& sells, const Price matchPrice, Trades& trades) {
-        auto adjustOpenQty = [](OrderFields &of, int qty) { of.qty -= qty; };
+        auto adjustOpenQty = [](MatchFields &of, int qty) { of.qty -= qty; };
 
-        auto completelyFilled = [](OrderFields &of) { return of.qty == 0; };
+        auto completelyFilled = [](MatchFields &of) { return of.qty == 0; };
 
         auto matchQty = 0;
         for (auto b = buys.begin(); b != buys.end(); ++b) {

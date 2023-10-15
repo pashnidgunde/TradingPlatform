@@ -1,14 +1,6 @@
 #pragma once
 #include <list>
-
-
-using Price = int;
-using OrderId = int;
-using UserId = int;
-using Qty = int;
-using SymbolId = int;
-
-#include "OrderBookFields.h"
+#include "WireFormat.h"
 
 namespace platform {
 struct Ack {

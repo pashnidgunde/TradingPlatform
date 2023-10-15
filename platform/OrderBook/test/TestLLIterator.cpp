@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "OrderedLinkedList.h"
+#include "LinkedList.h"
 
 using namespace platform;
 
@@ -11,7 +11,7 @@ protected:
 };
 
 TEST_F(TestLinkListIterator, testInitialState) {
-    using IntLL = OrderedLinkedList<int, std::less<>>;
+    using IntLL = LinkedList<int>;
     auto ll = IntLL{};
     IntLL::Iterator begin = ll.begin();
     IntLL::Iterator end = ll.end();
@@ -20,7 +20,7 @@ TEST_F(TestLinkListIterator, testInitialState) {
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator) {
-    using IntLL = OrderedLinkedList<int, std::less<>>;
+    using IntLL = LinkedList<int>;
     IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
     IntLL::Iterator begin = ll.begin();
@@ -38,7 +38,7 @@ TEST_F(TestLinkListIterator, testForwardIterator) {
 }
 
 TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
-    using IntLL = OrderedLinkedList<int, std::less<>>;
+    using IntLL = LinkedList<int>;
     IntLL ll{};
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(2));
@@ -59,7 +59,7 @@ TEST_F(TestLinkListIterator, testForwardIterator2Elements) {
 }
 
 TEST_F(TestLinkListIterator, testInsertAtMiddle) {
-    using IntLL = OrderedLinkedList<int, std::less<>>;
+    using IntLL = LinkedList<int>;
     IntLL ll;
     EXPECT_NE(nullptr, ll.insert(1));
     EXPECT_NE(nullptr, ll.insert(3));
@@ -67,7 +67,7 @@ TEST_F(TestLinkListIterator, testInsertAtMiddle) {
     IntLL::Iterator begin = ll.begin();
     ASSERT_NE(begin, ll.end());
     ASSERT_EQ(begin->get(), 1);
-    ASSERT_EQ((++begin)->get(), 2);
     ASSERT_EQ((++begin)->get(), 3);
+    ASSERT_EQ((++begin)->get(), 2);
     ASSERT_EQ(++begin, ll.end());
 }

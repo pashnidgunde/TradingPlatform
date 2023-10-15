@@ -105,8 +105,6 @@ TEST_F(TestOrderBook, testSellOrdering) {
 TEST_F(TestOrderBook, testNoMatch) {
     OrderBook b;
     std::string symbol{0};
-    std::vector<OrderBookFields> inputs;
-    inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
         b.addBuy(NewOrder(i, i, 10, 1,90));
     }

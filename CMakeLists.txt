@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -Wpedantic")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -Wpedantic")
 
+include_directories(./include)
 add_subdirectory(platform)
 add_subdirectory(services)
 

@@ -1,23 +1,10 @@
 #pragma once
 
 #include <ostream>
+#include "WireFormat.h"
+
 namespace platform {
-struct OrderIdentifier {
-  int userId = 0;
-  int orderId = 0;
 
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const OrderIdentifier& identifier) {
-    os << "userId: " << identifier.userId << " orderId: " << identifier.orderId;
-    return os;
-  }
-
-  bool operator==(const OrderIdentifier& rhs) const {
-    return userId == rhs.userId && orderId == rhs.orderId;
-  }
-
-  bool operator!=(const OrderIdentifier& rhs) const { return !(rhs == *this); }
-};
 
 struct OrderBookFields {
   OrderIdentifier oi;

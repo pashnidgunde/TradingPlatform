@@ -2,12 +2,8 @@
 
 #include <cstring>
 #include <cstdint>
-#include "OrderBookFields.h"
-
-struct Side {
-    static constexpr char BUY = 'B';
-    static constexpr char SELL = 'S';
-};
+#include "unused/OrderBookFields.h"
+#include "WireFormat.h"
 
 namespace platform {
     struct Order {

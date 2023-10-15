@@ -3,11 +3,11 @@ project(TestOrderBook)
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}
-        TestLLOrderedByLess.cpp
-        TestOrderBookLL.cpp
+        unused/TestLLOrderedByLess.cpp
+        unused/TestOrderBookLL.cpp
         TestLLIterator.cpp
         TestReverseIterator.cpp
-        TestOrderedByGreater.cpp
+        unused/TestOrderedByGreater.cpp
         TestOrderBook.cpp
 )
 

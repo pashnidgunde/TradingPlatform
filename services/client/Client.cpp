@@ -2,6 +2,7 @@
 #include <boost/asio.hpp>
 #include "CSVFileReader.h"
 #include "Tokenizer.h"
+#include "Encoder.h"
 
 namespace client {
     using boost::asio::ip::udp;
@@ -23,8 +24,12 @@ namespace client {
             socket_.close();
         }
 
-        void send(const std::string &msg) {
-            socket_.send_to(boost::asio::buffer(msg, msg.size()), endpoint_);
+        void send(const Message& message) {
+            this->send(reinterpret_cast<const char *>(&message), sizeof(Message));
+        }
+
+        void send(const char* msg, int len) {
+            socket_.send_to(boost::asio::buffer(msg, len), endpoint_);
         }
 
     private:
@@ -43,10 +48,14 @@ int main(int argc, char **argv) {
 
     client::CSVFileReader fileReader(argv[1]);
     auto instructions = fileReader.instructions();
-
-
+    Encoder encoder;
     boost::asio::io_service io_service;
     client::UDPClient client(io_service, "localhost", "1234");
-    client.send("Hello");
+
+    for (const auto& instruction : instructions) {
+        Message encoded = encoder.encode(instruction);
+        client.send(encoded);
+    }
+
     return 0;
 }
