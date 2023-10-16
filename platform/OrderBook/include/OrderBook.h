@@ -12,7 +12,6 @@
 using namespace platform;
 
 
-
 struct NewOrder {
     MatchFields of;
     SymbolId symbol{};
@@ -33,8 +32,6 @@ struct NewOrder {
     }
 };
 
-
-
 using FIFOOrderQueue = LinkedList<MatchFields>;
 
 struct OrdersBySymbolId {
@@ -52,7 +49,7 @@ struct OrdersBySymbolId {
         [[nodiscard]] bool isEmpty() const { return static_cast<const T *>(this)->orders.empty(); }
 
         FIFOOrderQueue::NodePtr insert(const NewOrder &order) {
-            auto & ll = mutableOrdersAtPrice(order.price);
+            auto &ll = mutableOrdersAtPrice(order.price);
             auto node = ll.insert(order.of);
             return node;
         }
@@ -61,18 +58,18 @@ struct OrdersBySymbolId {
             return (ordersAtPrice(price).isEmpty()) ? 0 : ordersAtPrice(price).size();
         }
 
-        [[nodiscard]] const auto& getAll() const {
+        [[nodiscard]] const auto &getAll() const {
             return static_cast<const T *>(this)->orders;
         }
 
-        [[nodiscard]] auto& mutableAll() {
+        [[nodiscard]] auto &mutableAll() {
             return static_cast<T *>(this)->orders;
         }
 
         [[nodiscard]] std::optional<TopOfBook<SIDE>> top() const {
             if (isEmpty()) return std::nullopt;
             auto it = static_cast<const T *>(this)->orders.begin();
-            return TopOfBook<SIDE>{it->first,it->second.front().qty};
+            return TopOfBook<SIDE>{it->first, it->second.front().qty};
         }
     };
 
@@ -96,20 +93,15 @@ struct OrderBook {
         return book[symbol].buyOrders.isEmpty() && book[symbol].sellOrders.isEmpty();
     }
 
-    auto addBuy(const NewOrder& order) {
+    auto addBuy(const NewOrder &order) {
         return book[order.symbol].buyOrders.insert(order);
     }
 
-//    template<typename S, typename ...Args>
-//    auto addBuy(S symbol, Args&& ...args) {
-//        return book[symbol].buyOrders.insert(std::forward<NewOrder>(args...));
-//    }
-
-    auto addSell(const NewOrder& order) {
+    auto addSell(const NewOrder &order) {
         return book[order.symbol].sellOrders.insert(order);
     }
 
-    auto addSell(NewOrder&& order) {
+    auto addSell(NewOrder &&order) {
         return book[order.symbol].sellOrders.insert(std::forward<NewOrder>(order));
     }
 
@@ -129,7 +121,7 @@ struct OrderBook {
         return book[symbol].sellOrders;
     }
 
-    auto &mutableBuyOrders(SymbolId symbol)  {
+    auto &mutableBuyOrders(SymbolId symbol) {
         return book[symbol].buyOrders.mutableAll();
     }
 
@@ -137,7 +129,7 @@ struct OrderBook {
         return book[symbol].sellOrders.mutableAll();
     }
 
-    void cross(FIFOOrderQueue& buys, FIFOOrderQueue& sells, const Price matchPrice, Trades& trades) {
+    void cross(FIFOOrderQueue &buys, FIFOOrderQueue &sells, const Price matchPrice, Trades &trades) {
         auto adjustOpenQty = [](MatchFields &of, int qty) { of.qty -= qty; };
 
         auto completelyFilled = [](MatchFields &of) { return of.qty == 0; };
@@ -145,11 +137,11 @@ struct OrderBook {
         auto matchQty = 0;
         for (auto b = buys.begin(); b != buys.end(); ++b) {
             for (auto s = sells.begin(); s != sells.end(); ++s) {
-                auto& buy = b->get();
-                auto& sell = s->get();
+                auto &buy = b->get();
+                auto &sell = s->get();
                 matchQty = std::min(buy.qty, sell.qty);
 
-                trades.emplace_back(buy.oi,sell.oi, matchPrice, matchQty);
+                trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
                 adjustOpenQty(buy, matchQty);
                 adjustOpenQty(sell, matchQty);
                 if (completelyFilled(buy)) {
@@ -176,12 +168,12 @@ struct OrderBook {
 
         Trades trades;
         auto matchPrice = 0;
-        for (auto & buyPair: mutableBuyOrders(sId)) {
-            for (auto & sellPair: mutableSellOrders(sId)) {
+        for (auto &buyPair: mutableBuyOrders(sId)) {
+            for (auto &sellPair: mutableSellOrders(sId)) {
                 if (!canCross(buyPair.first, sellPair.first))
                     break;
                 matchPrice = std::min(buyPair.first, sellPair.first);
-                cross(buyPair.second, sellPair.second, matchPrice,trades);
+                cross(buyPair.second, sellPair.second, matchPrice, trades);
             }
         }
 

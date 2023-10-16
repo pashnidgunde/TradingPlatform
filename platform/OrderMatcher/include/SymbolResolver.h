@@ -6,12 +6,6 @@
 #include <stdexcept>
 
 struct SymbolResolver {
-    SymbolResolver(const uint16_t m, const uint16_t x) :
-        lowRange(m),
-        highRange(x)
-    {
-    }
-
     uint16_t resolve(const std::string &symbol) {
         if (sid == highRange) {
             throw std::runtime_error("Unsupported symbol");

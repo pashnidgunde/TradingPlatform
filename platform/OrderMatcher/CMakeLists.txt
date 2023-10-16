@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME}
         include/MessageQueue.h
         OrderMatcher.cpp
         include/MessageHandler.h
+        include/Journal.h
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ../OrderBook/include)

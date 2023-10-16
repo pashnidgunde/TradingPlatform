@@ -1,6 +1,8 @@
 #pragma once
+
 #include <cstdint>
 #include <ostream>
+#include <functional>
 
 using Price = int;
 using OrderId = int;
@@ -28,20 +30,24 @@ struct Message {
 #pragma pack (push, 1)
 
 struct OrderIdentifier {
-    int userId = 0;
-    int orderId = 0;
+    UserId userId = 0;
+    OrderId orderId = 0;
 
-    friend std::ostream& operator<<(std::ostream& os,
-                                    const OrderIdentifier& identifier) {
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const OrderIdentifier &identifier) {
         os << "userId: " << identifier.userId << " orderId: " << identifier.orderId;
         return os;
     }
 
-    bool operator==(const OrderIdentifier& rhs) const {
+    bool operator==(const OrderIdentifier &rhs) const {
         return userId == rhs.userId && orderId == rhs.orderId;
     }
 
-    bool operator!=(const OrderIdentifier& rhs) const { return !(rhs == *this); }
+    std::size_t operator()() const {
+        return std::hash<int>{}(userId) << (std::hash<int>{}(orderId) << 1);
+    }
+
+    bool operator!=(const OrderIdentifier &rhs) const { return !(rhs == *this); }
 };
 
 struct MatchFields {
@@ -56,7 +62,6 @@ struct MatchFields {
         return !(rhs == *this);
     }
 };
-
 
 struct Order {
     OrderIdentifier oi{};
