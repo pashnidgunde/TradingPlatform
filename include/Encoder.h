@@ -6,9 +6,10 @@
 #include "WireFormat.h"
 #include <string_view>
 #include <memory>
+#include <optional>
 
 struct Encoder {
-    Message encode(const std::string &input) {
+    std::optional<Message> encode(const std::string &input) {
         std::vector<std::string> tokens = platform::util::Tokenizer::tokenize(input);
         Message msg;
         if (tokens[0][0] == MSGTYPE_NEW) {
@@ -16,8 +17,9 @@ struct Encoder {
             msg.length = sizeof(Order);
             auto order = enocdeOrder(tokens);
             memcpy(msg.payload, &order, sizeof(Order));
+            return msg;
         }
-        return msg;
+        return std::nullopt;
     }
 
     Order enocdeOrder(std::vector<std::string> tokens) {

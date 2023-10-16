@@ -18,11 +18,11 @@ namespace client {
             socket_.close();
         }
 
-        void send(const Message& message) {
+        void send(const Message &message) {
             this->send(reinterpret_cast<const char *>(&message), sizeof(Message));
         }
 
-        void send(const char* msg, int len) {
+        void send(const char *msg, int len) {
             socket_.send_to(boost::asio::buffer(msg, len), endpoint_);
         }
 
@@ -46,9 +46,12 @@ int main(int argc, char **argv) {
     Encoder encoder;
     client::UDPClient client;
 
-    for (const auto& instruction : instructions) {
-        Message encoded = encoder.encode(instruction);
-        client.send(encoded);
+    for (const auto &instruction: instructions) {
+        auto encoded = encoder.encode(instruction);
+        if (!encoded) {
+            std::cerr << "Failed to encode : " << instruction << std::endl;
+        }
+        client.send(encoded.value());
     }
 
     return 0;
