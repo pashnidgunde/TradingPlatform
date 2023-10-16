@@ -1,16 +1,17 @@
 #pragma once
+
 #include "WireFormat.h"
 #include "../../OrderBook/include/OrderBook.h"
 
 template<char>
-struct Handler{
+struct Handler {
 };
 
 template<>
 struct Handler<MSGTYPE_NEW> {
-    bool operator()(const Message& msg) {
-        const Order *order = reinterpret_cast<const Order*>(msg.payload);
-        switch(order->side) {
+    void operator()(const Message &msg) {
+        const Order *order = reinterpret_cast<const Order *>(msg.payload);
+        switch (order->side) {
             case SIDE_BUY:
                 break;
             case SIDE_SELL:
@@ -23,7 +24,7 @@ struct Handler<MSGTYPE_NEW> {
 };
 
 struct MessageHandler {
-    void onIncoming(const Message& msg) {
+    void onIncoming(const Message &msg) {
         //validate
         if (!isValid(msg)) {
             std::cerr << "Failed to validate message";
@@ -35,7 +36,7 @@ struct MessageHandler {
         handle(msg);
     }
 
-    bool isValid(const Message& msg) {
+    bool isValid(const Message &msg) {
         auto isValidMsgType = [](char msgType) {
             return (msgType == MSGTYPE_NEW ||
                     msgType == MSGTYPE_CANCEL ||
@@ -47,23 +48,19 @@ struct MessageHandler {
     }
 
 
-
     struct Common {
         OrderBook<1024> orderBook;
     };
 
 
-
     void handle(Message msg) {
-        switch(msg.type) {
+        switch (msg.type) {
             case MSGTYPE_NEW :
-                Handler<MSGTYPE_NEW>(msg);
+                Handler<MSGTYPE_NEW>()(msg);
                 break;
         }
 
     }
-
-
 
 
 };

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include "Tokenizer.h"
@@ -7,18 +8,19 @@
 #include <memory>
 
 struct Encoder {
-    Message encode(const std::string& input) {
+    Message encode(const std::string &input) {
         std::vector<std::string> tokens = platform::util::Tokenizer::tokenize(input);
         Message msg;
-        if (tokens[0][0] == MsgTypeVal::NEW) {
-            msg.type = MsgTypeVal::NEW;
+        if (tokens[0][0] == MSGTYPE_NEW) {
+            msg.type = MSGTYPE_NEW;
             msg.length = sizeof(Order);
             auto order = enocdeOrder(tokens);
-            memcpy(msg.payload,&order,sizeof(Order));
+            memcpy(msg.payload, &order, sizeof(Order));
         }
         return msg;
     }
-    Order enocdeOrder (std::vector<std::string> tokens) {
+
+    Order enocdeOrder(std::vector<std::string> tokens) {
         Order order;
         order.oi.userId = atoi(tokens[1].c_str());
         memcpy(order.symbol, tokens[2].c_str(), sizeof(tokens[2]));

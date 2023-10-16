@@ -1,8 +1,6 @@
 project(OrderBook LANGUAGES CXX)
 
 add_library(${PROJECT_NAME}
-        include/unused/OrderedLinkedList.h
-        include/unused/Order.h
         include/OutgoingEvents.h
         include/NodePool.h
         include/IncomingEvents.h
