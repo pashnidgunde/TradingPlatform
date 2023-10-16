@@ -11,18 +11,6 @@
 
 using namespace platform;
 
-struct MatchFields {
-    OrderIdentifier oi{};
-    Qty qty{};
-
-    bool operator==(const MatchFields &rhs) const {
-        return oi == rhs.oi && qty == rhs.qty;
-    }
-
-    bool operator!=(const MatchFields &rhs) const {
-        return !(rhs == *this);
-    }
-};
 
 
 struct NewOrder {
@@ -88,11 +76,11 @@ struct OrdersBySymbolId {
         }
     };
 
-    struct BuyOrders : public OrdersBySide<Side::BUY, BuyOrders> {
+    struct BuyOrders : public OrdersBySide<SIDE_BUY, BuyOrders> {
         std::map<Price, FIFOOrderQueue, std::greater<>> orders;
     };
 
-    struct SellOrders : public OrdersBySide<Side::SELL, SellOrders> {
+    struct SellOrders : public OrdersBySide<SIDE_SELL, SellOrders> {
         std::map<Price, FIFOOrderQueue, std::less<>> orders;
     };
 

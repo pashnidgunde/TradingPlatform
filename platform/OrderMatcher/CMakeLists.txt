@@ -2,9 +2,9 @@ project(OrderMatcher LANGUAGES CXX)
 
 add_library(${PROJECT_NAME}
         include/SymbolResolver.h
-        include/IncomingEvents.h
-        include/OrderMatcher.h
+        include/MessageQueue.h
         OrderMatcher.cpp
+        include/MessageHandler.h
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ../OrderBook/include)

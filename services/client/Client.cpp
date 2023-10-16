@@ -6,18 +6,12 @@
 
 namespace client {
     using boost::asio::ip::udp;
+    using boost::asio::ip::address;
 
     class UDPClient {
     public:
-        UDPClient(
-                boost::asio::io_service &io_service,
-                const std::string &host,
-                const std::string &port
-        ) : io_service_(io_service), socket_(io_service, udp::endpoint(udp::v4(), 0)) {
-            udp::resolver resolver(io_service_);
-            udp::resolver::query query(udp::v4(), host, port);
-            udp::resolver::iterator iter = resolver.resolve(query);
-            endpoint_ = *iter;
+        UDPClient() : socket_(io_service_) {
+            socket_.open(udp::v4());
         }
 
         ~UDPClient() {
@@ -33,11 +27,12 @@ namespace client {
         }
 
     private:
-        boost::asio::io_service &io_service_;
+        const std::string IPADDRESS = "127.0.0.1";
+        const long UDP_PORT = 13251;
+        boost::asio::io_service io_service_;
         udp::socket socket_;
-        udp::endpoint endpoint_;
+        udp::endpoint endpoint_ = udp::endpoint(address::from_string(IPADDRESS), UDP_PORT);
     };
-
 }
 
 int main(int argc, char **argv) {
@@ -49,8 +44,7 @@ int main(int argc, char **argv) {
     client::CSVFileReader fileReader(argv[1]);
     auto instructions = fileReader.instructions();
     Encoder encoder;
-    boost::asio::io_service io_service;
-    client::UDPClient client(io_service, "localhost", "1234");
+    client::UDPClient client;
 
     for (const auto& instruction : instructions) {
         Message encoded = encoder.encode(instruction);

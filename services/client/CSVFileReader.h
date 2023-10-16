@@ -38,9 +38,9 @@ namespace client {
 
             std::string line;
             while (getline(fs, line)) {
-                if (!isComment(line)) {
-                    _instructions.emplace_back(std::move(line));
-                }
+                if (line.empty()) continue;
+                if (isComment(line)) continue;
+                _instructions.emplace_back(std::move(line));
             }
 
             fs.close();

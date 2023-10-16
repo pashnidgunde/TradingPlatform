@@ -7,19 +7,17 @@ using OrderId = int;
 using UserId = int;
 using Qty = int;
 using SymbolId = int;
-using SideType = char;
+using Side = char;
 using MsgType = char;
 
-struct MsgTypeVal {
-    static constexpr char NEW = 'N';
-    static constexpr char CANCEL = 'C';
-    static constexpr char FLUSH = 'F';
-};
 
-struct Side {
-    static constexpr char BUY = 'B';
-    static constexpr char SELL = 'S';
-};
+static constexpr char MSGTYPE_NEW = 'N';
+static constexpr char MSGTYPE_CANCEL = 'C';
+static constexpr char MSGTYPE_FLUSH = 'F';
+
+static constexpr char SIDE_BUY = 'B';
+static constexpr char SIDE_SELL = 'S';
+
 
 struct Message {
     MsgType type{};
@@ -46,12 +44,26 @@ struct OrderIdentifier {
     bool operator!=(const OrderIdentifier& rhs) const { return !(rhs == *this); }
 };
 
+struct MatchFields {
+    OrderIdentifier oi{};
+    Qty qty{};
+
+    bool operator==(const MatchFields &rhs) const {
+        return oi == rhs.oi && qty == rhs.qty;
+    }
+
+    bool operator!=(const MatchFields &rhs) const {
+        return !(rhs == *this);
+    }
+};
+
+
 struct Order {
-    OrderIdentifier oi;
-    char symbol[32];
-    Price price;
-    Qty qty;
-    SideType side;
+    OrderIdentifier oi{};
+    char symbol[32] = {0};
+    Price price{};
+    Qty qty{};
+    Side side{};
 };
 static_assert(sizeof(Order) == 49);
 
