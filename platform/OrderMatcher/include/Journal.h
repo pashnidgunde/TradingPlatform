@@ -4,6 +4,7 @@
 #include <thread>
 #include <queue>
 #include <mutex>
+#include <variant>
 
 template<typename T>
 class Journal {
