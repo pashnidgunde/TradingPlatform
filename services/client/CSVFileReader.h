@@ -22,7 +22,7 @@ namespace client {
             }
         }
 
-        [[nodiscard]] const OrderInstructions instructions() const {
+        const OrderInstructions &instructions() const {
             return _instructions;
         }
 

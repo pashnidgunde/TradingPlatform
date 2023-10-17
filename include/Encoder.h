@@ -24,12 +24,12 @@ struct Encoder {
 
     static Order encodeOrder(std::vector<std::string> tokens) {
         Order order;
-        order.oi.userId = atoi(tokens[1].c_str());
-        memcpy(order.symbol, tokens[2].c_str(), sizeof(tokens[2]));
-        order.price = atoi(tokens[3].c_str());
-        order.qty = atoi(tokens[4].c_str());
+        order.oi.userId = stoi(tokens[1]);
+        memcpy(order.symbol, tokens[2].c_str(), std::min(sizeof(order.symbol), tokens[2].size()));
+        order.price = stoi(tokens[3]);
+        order.qty = stoi(tokens[4]);
         order.side = tokens[5][0];
-        order.oi.orderId = atoi(tokens[6].c_str());
+        order.oi.orderId = stoi(tokens[6]);
         return order;
     }
 };

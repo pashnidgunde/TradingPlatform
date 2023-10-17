@@ -11,10 +11,6 @@
       "version>=": "1.81.0"
     },
     {
-      "name": "boost-lockfree",
-      "version>=": "1.81.0"
-    },
-    {
       "name": "boost-asio",
       "version>=": "1.81.0"
     },

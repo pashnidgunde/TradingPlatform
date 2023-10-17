@@ -5,18 +5,17 @@
 
 #include "MessageHandler.h"
 
-
 namespace platform {
     struct MessageQueue {
         MessageQueue() {
-            consumerThread = std::thread{&MessageQueue::consume, this};
+            consumerThread = std::thread{&MessageQueue::deque, this};
         }
 
-        void incoming(const Message *msg) {
+        void enqueue(const Message *msg) {
             q.push(*msg);
         }
 
-        void consume() {
+        [[noreturn]] void deque() {
             Message msg;
             while (true) {
                 msg = q.pop();
@@ -33,8 +32,4 @@ namespace platform {
         std::thread consumerThread{};
         MessageHandler handler;
     };
-
-
-
-
 }

@@ -41,7 +41,7 @@ namespace {
             //std::cout << "Received: '" << std::string(_recvBuffer.begin(), _recvBuffer.begin()+bytes_transferred) << "' (" << error.message() << ")\n";
             std::string str(_recvBuffer.begin(), _recvBuffer.begin() + bytes_transferred);
             const auto *m = reinterpret_cast<const Message *>(str.c_str());
-            msgQueue.incoming(m);
+            msgQueue.enqueue(m);
 
             startReceive();
         }

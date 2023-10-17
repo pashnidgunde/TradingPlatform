@@ -43,11 +43,10 @@ int main(int argc, char **argv) {
 
     client::CSVFileReader fileReader(argv[1]);
     auto instructions = fileReader.instructions();
-    Encoder encoder;
     client::UDPClient client;
 
     for (const auto &instruction: instructions) {
-        auto encoded = encoder.encode(instruction);
+        auto encoded = Encoder::encode(instruction);
         if (!encoded.has_value()) {
             std::cerr << "Failed to encode : " << instruction << std::endl;
             continue;
