@@ -126,6 +126,18 @@ namespace platform {
             sz = 0;
         }
 
+        void remove(NodePtr node) {
+            if (!node) return;
+            if (node->prev) {
+                node->prev->next = node->next;
+            }
+            if (node->next) {
+                node->next->prev = node->prev;
+            }
+            sz--;
+            pool.put(node);
+        }
+
         [[nodiscard]] size_t size() const { return sz; }
 
         Iterator begin() const { return Iterator(head); };
@@ -137,6 +149,8 @@ namespace platform {
         ReverseIterator rend() const { return ReverseIterator(nullptr); }
 
         const T &front() const { return head->get(); }
+
+        NodePtr frontNode() const { return head; }
 
     private:
         NodePool<T, 1024> pool;
