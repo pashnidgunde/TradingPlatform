@@ -6,15 +6,8 @@
 #include <variant>
 #include "SymbolResolver.h"
 
-struct OrderIdentifierHasher {
-    std::size_t operator()(const OrderIdentifier &oi) const {
-        return ((std::hash<UserId>()(oi.userId))
-                ^ (std::hash<OrderId>()(oi.orderId) << 1));
-    }
-};
-
 struct MessageHandler {
-    void onIncoming(const Message &msg) {
+    void onIncoming(Message &msg) {
         //validate
         if (!isValid(msg)) {
             std::cerr << "Failed to validate message" << std::endl;
@@ -23,41 +16,34 @@ struct MessageHandler {
         }
 
         //handler
-        handle(msg);
+        handleIncoming(msg);
     }
 
     bool isValid(const Message &msg) {
         auto isValidMsgType = [](char msgType, size_t msgLen) {
             if (msgType == MSGTYPE_NEW) {
                 return msgLen == sizeof(Order);
-            }
-            else if (msgType == MSGTYPE_CANCEL) {
+            } else if (msgType == MSGTYPE_CANCEL) {
                 return msgLen == sizeof(CancelOrder);
-            }
-            else if (msgType ==  MSGTYPE_FLUSH) {
+            } else if (msgType == MSGTYPE_FLUSH) {
                 return msgLen == sizeof(Flush);
             }
             return false;
         };
 
-        // TO DO : Compile time any_of
         return isValidMsgType(msg.type, msg.length);
     }
 
-    auto addToSymbolBook(uint16_t symbolId, const Order *order) {
-        FIFOOrderQueue::NodePtr node{nullptr};
+    auto addToSymbolBook(const Order *order) {
         if (order->side == SIDE_BUY) {
-            node = orderBook.addBuy({order->oi.userId, order->oi.orderId, order->qty, symbolId, order->price});
+            orderBook.addBuy(*order);
         } else if (order->side == SIDE_SELL) {
-            node = orderBook.addSell({order->oi.userId, order->oi.orderId, order->qty, symbolId, order->price});
+            orderBook.addSell(*order);
         } else {
             std::cerr << "Invalid side";
             // NACK
             return false;
         }
-
-        // index for cancel lookup
-        orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = node;
 
         // enqueue to print
         consoleJournal.log(Ack{order->oi});
@@ -65,43 +51,71 @@ struct MessageHandler {
         return true;
     }
 
-    void handle(Message msg) {
-        if (msg.type == MSGTYPE_NEW) {
-            const auto *order = reinterpret_cast<const Order *>(msg.payload);
+    using TopOfBookPair = std::pair<std::optional<TopOfBook<SIDE_BUY>>, std::optional<TopOfBook<SIDE_SELL>>>;
 
-            auto symbolId = symbolResolver.resolve(order->symbol);
-
-            if (!addToSymbolBook(symbolId, order)) return;
-
-            auto trades = orderBook.tryCross(symbolId);
-            if (!trades.empty()) {
-                consoleJournal.log(trades);
+    void journalTopOfBook(const TopOfBookPair &pair) {
+        auto journalTop = [&](const auto &top) {
+            if (top.has_value()) {
+                consoleJournal.log(top.value());
             }
+        };
+        journalTop(pair.first);
+        journalTop(pair.second);
+    }
 
-            auto newBuyTop = orderBook.buyTop(symbolId);
-            if (newBuyTop.has_value()) {
-                auto& value = newBuyTop.value();
-                if ( value != latestBuyTop) {
-                    consoleJournal.log(value);
-                    latestBuyTop = value;
-                }
-            }
+    template<MsgType>
+    void handle(Message &) {}
 
-            auto newSellTop = orderBook.sellTop(symbolId);
-            if (newSellTop.has_value()) {
-                auto& value = newSellTop.value();
-                if ( value != latestSellTop) {
-                    consoleJournal.log(value);
-                    latestSellTop = value;
-                }
-            }
+    template<>
+    void handle<MSGTYPE_NEW>(Message &msg) {
+        auto *order = reinterpret_cast<Order *>(msg.payload);
+
+        order->symbol.id = symbolResolver.resolve(order->symbol.name);
+
+        if (!addToSymbolBook(order)) return;
+
+        auto trades = orderBook.tryCross(order->symbol.id);
+        if (!trades.empty()) {
+            consoleJournal.log(trades);
+        }
+
+        this->journalTopOfBook(orderBook.topOfBook(order->symbol.id));
+    }
+
+    template<>
+    void handle<MSGTYPE_CANCEL>(Message &msg) {
+        const auto *cancel = reinterpret_cast<const CancelOrder *>(msg.payload);
+        auto order = orderBook.find(cancel->oi);
+        orderBook.cancel(cancel->oi);
+        this->journalTopOfBook(orderBook.topOfBook(order->get().side));
+    }
+
+    template<>
+    void handle<MSGTYPE_FLUSH>(Message & /*unused*/) {
+        orderBook.flush();
+        consoleJournal.log(Flush{});
+    }
+
+    void handleIncoming(Message &msg) {
+        switch (msg.type) {
+            case MSGTYPE_NEW :
+                handle<MSGTYPE_NEW>(msg);
+                break;
+
+            case MSGTYPE_CANCEL :
+                handle<MSGTYPE_CANCEL>(msg);
+                break;
+
+            case MSGTYPE_FLUSH :
+                handle<MSGTYPE_FLUSH>(msg);
+                break;
+
+            default:
+                std::cerr << "Invalid instruction";
         }
     }
 
-    TopOfBook<SIDE_BUY> latestBuyTop;
-    TopOfBook<SIDE_SELL> latestSellTop;
     SymbolResolver symbolResolver;
     OrderBook<1024> orderBook;
-    Journal<std::variant<Ack, CancelAck, Trades, TopOfBook<SIDE_BUY>, TopOfBook<SIDE_SELL>>> consoleJournal;
-    std::unordered_map<OrderIdentifier, FIFOOrderQueue::NodePtr, OrderIdentifierHasher> orderIdToNodeMap;
+    Journal<std::variant<Ack, CancelAck, Trades, TopOfBook<SIDE_BUY>, TopOfBook<SIDE_SELL>, Flush>> consoleJournal;
 };

@@ -120,6 +120,12 @@ namespace platform {
             }
         }
 
+        void clear() {
+            this->removeIf([](auto node) { return node != nullptr; });
+            head = tail = nullptr;
+            sz = 0;
+        }
+
         [[nodiscard]] size_t size() const { return sz; }
 
         Iterator begin() const { return Iterator(head); };

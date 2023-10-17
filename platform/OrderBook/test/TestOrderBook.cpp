@@ -20,17 +20,17 @@ TEST_F(TestOrderBook, IsisEmptyInitially) {
 
 TEST_F(TestOrderBook, testOrderConstructor) {
     OrderBook b;
-    b.addBuy(NewOrder(1, 1, 100, 1, 10));
+    b.addBuy(Order(1, 1, 100, 1, 10));
     EXPECT_FALSE(b.buyOrders(1).isEmpty());
     EXPECT_TRUE(b.sellOrders(0).isEmpty());
-    b.addSell(NewOrder(1, 1, 100, 1, 10));
+    b.addSell(Order(1, 1, 100, 1, 10));
     EXPECT_FALSE(b.sellOrders(1).isEmpty());
 
     EXPECT_EQ(b.buyOrders(1).size(10), 1);
     EXPECT_EQ(b.sellOrders(1).size(10), 1);
 
-    b.addSell(NewOrder(1, 1, 100, 1, 10));
-    b.addSell(NewOrder(1, 1, 100, 1, 10));
+    b.addSell(Order(1, 1, 100, 1, 10));
+    b.addSell(Order(1, 1, 100, 1, 10));
     EXPECT_EQ(b.sellOrders(1).size(10), 3);
 }
 
@@ -40,7 +40,7 @@ TEST_F(TestOrderBook, testBuyOrdering) {
     std::random_device seed;
     std::mt19937 gen{seed()};                      // seed the generator
     std::uniform_int_distribution<> dist{1, 100};  // set min and max
-    std::vector<NewOrder> inputs;
+    std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
         inputs.emplace_back(i, i, i, 1, dist(gen));
@@ -54,7 +54,7 @@ TEST_F(TestOrderBook, testBuyOrdering) {
         return lhs.price > rhs.price;
     });
 
-    std::vector<NewOrder> actual;
+    std::vector<Order> actual;
     const auto &buys = b.buyOrders(1).getAll();
     actual.reserve(10);
     for (const auto &buy: buys) {
@@ -74,7 +74,7 @@ TEST_F(TestOrderBook, testSellOrdering) {
     std::random_device seed;
     std::mt19937 gen{seed()};                      // seed the generator
     std::uniform_int_distribution<> dist{1, 100};  // set min and max
-    std::vector<NewOrder> inputs;
+    std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
         inputs.emplace_back(i, i, i, 1, dist(gen));
@@ -88,7 +88,7 @@ TEST_F(TestOrderBook, testSellOrdering) {
         return lhs.price < rhs.price;
     });
 
-    std::vector<NewOrder> actual;
+    std::vector<Order> actual;
     const auto &sells = b.sellOrders(1).getAll();
     actual.reserve(10);
     for (const auto &sell: sells) {
@@ -106,9 +106,9 @@ TEST_F(TestOrderBook, testNoMatch) {
     OrderBook b;
     std::string symbol{0};
     for (int i = 0; i < 10; ++i) {
-        b.addBuy(NewOrder(i, i, 10, 1, 90));
+        b.addBuy(Order(i, i, 10, 1, 90));
     }
-    b.addSell(NewOrder(1, 1, 1000, 1, 100));
+    b.addSell(Order(1, 1, 1000, 1, 100));
     auto matches = b.tryCross(1);
 
     EXPECT_EQ(matches.size(), 0);
@@ -116,12 +116,12 @@ TEST_F(TestOrderBook, testNoMatch) {
 
 TEST_F(TestOrderBook, testSellSweep) {
     OrderBook b;
-    std::vector<NewOrder> inputs;
+    std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
-        b.addSell(NewOrder(i, i, 10, 1, 10));
+        b.addSell(Order(i, i, 10, 1, 10));
     }
-    b.addBuy(NewOrder(1, 1, 100, 1, 11));
+    b.addBuy(Order(1, 1, 100, 1, 11));
     auto matches = b.tryCross(1);
 
     EXPECT_EQ(matches.size(), 10);
@@ -135,12 +135,12 @@ TEST_F(TestOrderBook, testSellSweep) {
 TEST_F(TestOrderBook, testBuySweep) {
     OrderBook b;
     std::string symbol{0};
-    std::vector<NewOrder> inputs;
+    std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
-        b.addBuy(NewOrder(i, i, 10, 1, 10));
+        b.addBuy(Order(i, i, 10, 1, 10));
     }
-    b.addSell(NewOrder(1, 1, 100, 1, 9));
+    b.addSell(Order(1, 1, 100, 1, 9));
     auto matches = b.tryCross(1);
 
     EXPECT_EQ(matches.size(), 10);
@@ -155,9 +155,9 @@ TEST_F(TestOrderBook, testRemove) {
     OrderBook b;
 
     for (int i = 10; i < 20; i++)
-        b.addBuy(NewOrder(1, 1, 10, 1, i));
+        b.addBuy(Order(1, 1, 10, 1, i));
 
-    b.addSell(NewOrder(2, 1, 20, 1, 10));
+    b.addSell(Order(2, 1, 20, 1, 10));
     auto matches = b.tryCross(1);
     EXPECT_EQ(matches.size(), 2);
 
@@ -168,13 +168,13 @@ TEST_F(TestOrderBook, testRemove) {
     EXPECT_TRUE(buys.top().has_value());
     EXPECT_EQ(buys.top().value(), (TopOfBook<SIDE_BUY>{17, 10}));
 
-    auto node = b.addSell(NewOrder(2, 1, 55, 1, 16));
+    auto node = b.addSell(Order(2, 1, 55, 1, 16));
     matches = b.tryCross(1);
     EXPECT_EQ(matches.size(), 2);
     EXPECT_EQ(node->get().qty, 35);
     EXPECT_EQ(buys.top().value(), (TopOfBook<SIDE_BUY>{15, 10}));
 
-    node = b.addSell(NewOrder(2, 1, 500, 1, 10));
+    node = b.addSell(Order(2, 1, 500, 1, 10));
     matches = b.tryCross(1);
     EXPECT_EQ(matches.size(), 6);
     EXPECT_EQ(node->get().qty, 440);

@@ -51,22 +51,30 @@ namespace platform {
     template<char SIDE>
     struct TopOfBook {
         static constexpr char value = 'B';
-        Price price{};
-        Qty qty{};
         static constexpr char side = SIDE;
 
+        explicit TopOfBook(const Order &order) : top(order) {}
+
+        TopOfBook() = default;
+
+        Order top;
+
         friend std::ostream &operator<<(std::ostream &os, const TopOfBook &book) {
-            os << value << ", " << side << ", " << book.price << ", " << book.qty;
+            os << value << ", " << side << ", " << book.top.price << ", " << book.top.qty;
             return os;
         }
 
         bool operator==(const TopOfBook &rhs) const {
-            return price == rhs.price &&
-                   qty == rhs.qty;
+            return top.oi == rhs.top.oi;
         }
 
         bool operator!=(const TopOfBook &rhs) const {
             return !(rhs == *this);
+        }
+
+        void flush() {
+            top.oi.userId = 0;
+            top.oi.orderId = 0;
         }
     };
 
