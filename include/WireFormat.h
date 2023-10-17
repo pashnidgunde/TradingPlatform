@@ -69,6 +69,10 @@ struct Order {
             oi{u, o}, qty(q), symbol(name), price(p) {
     }
 
+    bool operator!=(const Order &rhs) const {
+        return !(rhs == *this);
+    }
+
     bool operator==(const Order &rhs) const {
         return oi.userId == rhs.oi.userId &&
                oi.orderId == rhs.oi.orderId;
