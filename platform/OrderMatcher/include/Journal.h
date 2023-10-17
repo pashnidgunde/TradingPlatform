@@ -2,8 +2,7 @@
 
 #include <iostream>
 #include <thread>
-#include <queue>
-#include <mutex>
+#include "TSQueue.h"
 #include <variant>
 
 template<typename T>
@@ -22,8 +21,7 @@ public:
 
     template<typename LogEvent>
     void log(const LogEvent &msg) {
-        std::lock_guard<std::mutex> lg(m);
-        events.push_back(msg);
+        events.push(msg);
     }
 
 private:
@@ -41,19 +39,11 @@ private:
         };
 
         while (true) {
-            while (events.empty()) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(10));
-            }
-            m.lock();
-            const T &event = events.front();
-            events.pop_front();
-            m.unlock();
-
+            auto event = events.pop();
             std::visit(visitor, event);
         }
     }
 
-    std::deque<T> events;
-    std::mutex m; // lock/unlock this each time messages is pushed or popped
+    TSQueue<T> events;
     std::thread t{};
 };

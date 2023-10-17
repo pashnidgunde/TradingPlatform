@@ -1,14 +1,10 @@
 #pragma once
 
-#include <array>
 #include <thread>
 #include <unordered_map>
 
-#include "SymbolResolver.h"
-#include <boost/lockfree/queue.hpp>
 #include "MessageHandler.h"
 
-using namespace boost::lockfree;
 
 namespace platform {
     struct MessageQueue {
@@ -22,7 +18,8 @@ namespace platform {
 
         void consume() {
             Message msg;
-            while (q.pop(msg)) {
+            while (true) {
+                msg = q.pop();
                 handler.onIncoming(msg);
                 // SEND PENDING STATUS BACK
             }
@@ -32,8 +29,12 @@ namespace platform {
             consumerThread.join();
         }
 
-        boost::lockfree::queue <Message, boost::lockfree::fixed_sized<false>> q{1024};
+        TSQueue<Message> q;
         std::thread consumerThread{};
         MessageHandler handler;
     };
+
+
+
+
 }

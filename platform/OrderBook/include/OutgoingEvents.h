@@ -10,7 +10,7 @@ namespace platform {
         OrderIdentifier sender;
 
         friend std::ostream &operator<<(std::ostream &os, const Ack &ack) {
-            os << value << " ," << ack.sender.userId << " ," << ack.sender.orderId;
+            os << value << ", " << ack.sender.userId << ", " << ack.sender.orderId;
             return os;
         }
     };
@@ -20,7 +20,7 @@ namespace platform {
         OrderIdentifier sender;
 
         friend std::ostream &operator<<(std::ostream &os, const CancelAck &ack) {
-            os << value << " ," << ack.sender.userId << " ," << ack.sender.orderId;
+            os << value << ", " << ack.sender.userId << ", " << ack.sender.orderId;
             return os;
         }
     };
@@ -38,10 +38,10 @@ namespace platform {
                 price(price), qty(qty) {}
 
         friend std::ostream &operator<<(std::ostream &os, const Trade &trade) {
-            os << value << " ," << trade.buyer.userId << " ," << trade.buyer.orderId
-               << " ," << trade.seller.userId << " ," << trade.seller.orderId
-               << " ," << trade.price
-               << " ," << trade.qty;
+            os << value << ", " << trade.buyer.userId << ", " << trade.buyer.orderId
+               << ", " << trade.seller.userId << ", " << trade.seller.orderId
+               << ", " << trade.price
+               << ", " << trade.qty;
             return os;
         }
     };
@@ -56,7 +56,7 @@ namespace platform {
         static constexpr char side = SIDE;
 
         friend std::ostream &operator<<(std::ostream &os, const TopOfBook &book) {
-            os << value << " ," << side << " ," << book.price << " ," << book.qty;
+            os << value << ", " << side << ", " << book.price << ", " << book.qty;
             return os;
         }
 

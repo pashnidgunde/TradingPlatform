@@ -48,8 +48,9 @@ int main(int argc, char **argv) {
 
     for (const auto &instruction: instructions) {
         auto encoded = encoder.encode(instruction);
-        if (!encoded) {
+        if (!encoded.has_value()) {
             std::cerr << "Failed to encode : " << instruction << std::endl;
+            continue;
         }
         client.send(encoded.value());
     }

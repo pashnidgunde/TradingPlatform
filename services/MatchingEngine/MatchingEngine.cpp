@@ -34,6 +34,7 @@ namespace {
                            std::size_t bytes_transferred) {
             if (error) {
                 std::cout << "Receive failed: " << error.message() << "\n";
+                startReceive();
                 return;
             }
 
