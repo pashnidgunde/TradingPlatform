@@ -203,12 +203,27 @@ struct OrderBook {
     using TopOfBookPair = std::pair<std::optional<TopOfBook<SIDE_BUY>>, std::optional<TopOfBook<SIDE_SELL>>>;
 
     void cancel(const OrderIdentifier &oi) {
-
         auto it = orderIdToNodeMap.find(oi);
         if (it == orderIdToNodeMap.end()) {
             // cancel reject
             // too late to cancel ?
             return;
+        }
+        auto &order = it->second->get();
+        if (order.side == SIDE_BUY) {
+            auto &orderMap = mutableBuyOrders(order.symbol.id);
+            auto &ll = orderMap[order.price];
+            ll.remove(it->second);
+            if (ll.isEmpty()) {
+                orderMap.erase(order.price);
+            }
+        } else {
+            auto &orderMap = mutableSellOrders(order.symbol.id);
+            auto &ll = orderMap[order.price];
+            ll.remove(it->second);
+            if (ll.isEmpty()) {
+                orderMap.erase(order.price);
+            }
         }
     }
 
