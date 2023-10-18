@@ -4,12 +4,14 @@
 #include <array>
 #include <optional>
 #include <map>
+#include <unordered_map>
+#include <list>
+#include <functional>
 
 #include "WireFormat.h"
-#include "LinkedList.h"
 #include "OutgoingEvents.h"
 
-using namespace platform;
+using namespace std;
 
 struct OrderIdentifierHasher {
     std::size_t operator()(const OrderIdentifier &oi) const {
@@ -18,7 +20,7 @@ struct OrderIdentifierHasher {
     }
 };
 
-using FIFOOrderQueue = LinkedList<Order>;
+using FIFOOrderQueue = std::list<Order>;
 
 struct OrdersBySymbolId {
     template<char SIDE, typename T>
@@ -34,14 +36,15 @@ struct OrdersBySymbolId {
 
         [[nodiscard]] bool isEmpty() const { return static_cast<const T *>(this)->orders.empty(); }
 
-        FIFOOrderQueue::NodePtr insert(const Order &order) {
+        auto insert(const Order &order) {
             auto &ll = mutableOrdersAtPrice(order.price);
-            auto node = ll.insert(order);
+            auto node = ll.emplace_back(order);
             return node;
         }
 
         [[nodiscard]] size_t size(Price price) const {
-            return (ordersAtPrice(price).isEmpty()) ? 0 : ordersAtPrice(price).size();
+            auto &ll = ordersAtPrice(price);
+            return ll.empty() ? 0 : ll.size();
         }
 
         [[nodiscard]] const auto &getAll() const {
@@ -51,20 +54,14 @@ struct OrdersBySymbolId {
         [[nodiscard]] auto &mutableAll() {
             return static_cast<T *>(this)->orders;
         }
-
-        [[nodiscard]] std::optional<TopOfBook<SIDE>> top() const {
-            if (isEmpty()) return std::nullopt;
-            auto it = static_cast<const T *>(this)->orders.begin();
-            return TopOfBook<SIDE>{it->second.front()};
-        }
     };
 
     struct BuyOrders : public OrdersBySide<SIDE_BUY, BuyOrders> {
-        std::map<Price, FIFOOrderQueue, std::greater<>> orders;
+        std::map<Price, std::list<Order>, std::greater<>> orders;
     };
 
     struct SellOrders : public OrdersBySide<SIDE_SELL, SellOrders> {
-        std::map<Price, FIFOOrderQueue, std::less<>> orders;
+        std::map<Price, std::list<Order>, std::less<>> orders;
     };
 
     BuyOrders buyOrders;
@@ -72,37 +69,10 @@ struct OrdersBySymbolId {
 
 };
 
-using BuyTop = std::pair<bool, std::optional<TopOfBook<SIDE_BUY>>>;
-using SellTop = std::pair<bool, std::optional<TopOfBook<SIDE_SELL>>>;
-using TopOfBookPair = std::pair<BuyTop, SellTop>;
-
 template<size_t SIZE = 1024>
 struct OrderBook {
 
-    [[nodiscard]] bool isEmpty(SymbolId symbol) const {
-        return book[symbol].buyOrders.isEmpty() && book[symbol].sellOrders.isEmpty();
-    }
-
-    [[maybe_unused]] auto addBuy(const Order &order) {
-        auto node = book[order.symbol.id].buyOrders.insert(order);
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = node;
-    }
-
-    [[maybe_unused]] auto addSell(const Order &order) {
-        auto node = book[order.symbol.id].sellOrders.insert(order);
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = node;
-        return node;
-    }
-
-    auto buyTop(SymbolId id) const {
-        return book[id].buyOrders.top();
-    }
-
-    auto sellTop(SymbolId id) const {
-        return book[id].sellOrders.top();
-    }
-
-    const OrdersBySymbolId::BuyOrders buyOrders(SymbolId id) const {
+    const auto &buyOrders(SymbolId id) const {
         return book[id].buyOrders;
     }
 
@@ -118,18 +88,33 @@ struct OrderBook {
         return book[id].sellOrders.mutableAll();
     }
 
-    void cross(FIFOOrderQueue &buys, FIFOOrderQueue &sells, const Price matchPrice, Trades &trades) {
+    [[nodiscard]] bool isEmpty(SymbolId symbol) const {
+        return buyOrders(symbol).isEmpty() && book[symbol].sellOrders.isEmpty();
+    }
+
+    [[maybe_unused]] auto addBuy(const Order &order) {
+        auto &ll = mutableBuyOrders(order.symbol.id)[(order.price)];
+        auto it = ll.insert(ll.end(), order);
+        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
+        return it;
+    }
+
+    [[maybe_unused]] auto addSell(const Order &order) {
+        auto &ll = mutableSellOrders(order.symbol.id)[(order.price)];
+        auto it = ll.insert(ll.end(), order);
+        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
+        return it;
+    }
+
+    void cross(std::list<Order> &buys, std::list<Order> &sells, const Price matchPrice, platform::Trades &trades) {
         auto adjustOpenQty = [](Order &o, int qty) { o.qty -= qty; };
 
         auto completelyFilled = [](Order &o) { return o.qty == 0; };
 
         auto matchQty = 0;
-        for (auto b = buys.begin(); b != buys.end(); ++b) {
-            for (auto s = sells.begin(); s != sells.end(); ++s) {
-                auto &buy = b->get();
-                auto &sell = s->get();
+        for (auto &buy: buys) {
+            for (auto &sell: sells) {
                 matchQty = std::min(buy.qty, sell.qty);
-
                 trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
                 adjustOpenQty(buy, matchQty);
                 adjustOpenQty(sell, matchQty);
@@ -140,12 +125,12 @@ struct OrderBook {
         }
 
         auto removeCompletelyFilled = [&]() {
-            auto zeroRemainingQty = [](FIFOOrderQueue::NodePtr node) {
-                return node->get().qty == 0;
+            auto zeroRemainingQty = [](Order &order) {
+                return order.qty == 0;
             };
 
-            buys.removeIf(zeroRemainingQty);
-            sells.removeIf(zeroRemainingQty);
+            buys.remove_if(zeroRemainingQty);
+            sells.remove_if(zeroRemainingQty);
         };
         removeCompletelyFilled();
     }
@@ -155,7 +140,7 @@ struct OrderBook {
             return buyPrice >= sellPrice;
         };
 
-        Trades trades;
+        platform::Trades trades;
         auto matchPrice = 0;
         for (auto &buyPair: mutableBuyOrders(id)) {
             for (auto &sellPair: mutableSellOrders(id)) {
@@ -198,13 +183,6 @@ struct OrderBook {
             clearAll(mutableBuyOrders(i));
             clearAll(mutableSellOrders(i));
         }
-
-        if (latestBuyTop) {
-            latestBuyTop.value().flush();
-        }
-        if (latestSellTop) {
-            latestSellTop.value().flush();
-        }
     }
 
 
@@ -215,59 +193,25 @@ struct OrderBook {
             // too late to cancel ?
             return;
         }
-        auto &order = it->second->get();
+        auto &iter = it->second;
+        auto &order = *iter;
         if (order.side == SIDE_BUY) {
             auto &orderMap = mutableBuyOrders(order.symbol.id);
             auto &ll = orderMap[order.price];
-            ll.remove(it->second);
-            if (ll.isEmpty()) {
+            ll.erase(iter);
+            if (ll.empty()) {
                 orderMap.erase(order.price);
             }
         } else {
             auto &orderMap = mutableSellOrders(order.symbol.id);
             auto &ll = orderMap[order.price];
-            ll.remove(it->second);
-            if (ll.isEmpty()) {
+            ll.erase(iter);
+            if (ll.empty()) {
                 orderMap.erase(order.price);
             }
         }
     }
 
-    TopOfBookPair topOfBook(const SymbolId id) {
-        TopOfBookPair pair;
-        {
-            auto &bt = pair.first;
-            const auto &newTop = buyTop(id);
-            if (newTop == latestBuyTop) {
-                bt.first = false;
-            } else {
-                bt.first = true;
-                latestBuyTop = newTop;
-                bt.second = latestBuyTop;
-            }
-        }
-        {
-            auto &bt = pair.second;
-            const auto &newTop = sellTop(id);
-            if (newTop == latestSellTop) {
-                bt.first = false;
-            } else {
-                bt.first = true;
-                latestSellTop = newTop;
-                bt.second = latestSellTop;
-            }
-        }
-
-        return pair;
-    }
-
-    auto find(const OrderIdentifier &oi) {
-        auto it = orderIdToNodeMap.find(oi);
-        return (it != orderIdToNodeMap.end()) ? it->second : nullptr;
-    }
-
-    std::optional<TopOfBook<SIDE_BUY>> latestBuyTop;
-    std::optional<TopOfBook<SIDE_SELL>> latestSellTop;
     std::array<OrdersBySymbolId, SIZE> book;
-    std::unordered_map<OrderIdentifier, FIFOOrderQueue::NodePtr, OrderIdentifierHasher> orderIdToNodeMap;
+    std::unordered_map<OrderIdentifier, std::list<Order>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
 };

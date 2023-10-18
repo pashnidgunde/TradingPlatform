@@ -2,8 +2,8 @@
 
 #include <thread>
 #include <unordered_map>
-
-#include "MessageHandler.h"
+#include "NewMessageHandler.h"
+#include "TSQueue.h"
 
 namespace platform {
     struct MessageQueue {
@@ -30,6 +30,6 @@ namespace platform {
 
         TSQueue<Message> q;
         std::thread consumerThread{};
-        MessageHandler handler;
+        NewMessageHandler handler;
     };
 }

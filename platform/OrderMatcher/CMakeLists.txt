@@ -8,6 +8,7 @@ add_library(${PROJECT_NAME}
         include/MessageHandler.h
         include/Journal.h
         include/TSQueue.h
+        include/NewMessageHandler.h
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ../OrderBook/include)
