@@ -72,6 +72,10 @@ struct OrdersBySymbolId {
 
 };
 
+using BuyTop = std::pair<bool, std::optional<TopOfBook<SIDE_BUY>>>;
+using SellTop = std::pair<bool, std::optional<TopOfBook<SIDE_SELL>>>;
+using TopOfBookPair = std::pair<BuyTop, SellTop>;
+
 template<size_t SIZE = 1024>
 struct OrderBook {
 
@@ -195,12 +199,14 @@ struct OrderBook {
             clearAll(mutableSellOrders(i));
         }
 
-        latestBuyTop.flush();
-        latestSellTop.flush();
+        if (latestBuyTop) {
+            latestBuyTop.value().flush();
+        }
+        if (latestSellTop) {
+            latestSellTop.value().flush();
+        }
     }
 
-
-    using TopOfBookPair = std::pair<std::optional<TopOfBook<SIDE_BUY>>, std::optional<TopOfBook<SIDE_SELL>>>;
 
     void cancel(const OrderIdentifier &oi) {
         auto it = orderIdToNodeMap.find(oi);
@@ -229,22 +235,26 @@ struct OrderBook {
 
     TopOfBookPair topOfBook(const SymbolId id) {
         TopOfBookPair pair;
-
-        auto newBuyTop = buyTop(id);
-        if (newBuyTop.has_value()) {
-            auto &value = newBuyTop.value();
-            if (value != latestBuyTop) {
-                latestBuyTop = value;
-                pair.first = latestBuyTop;
+        {
+            auto &bt = pair.first;
+            const auto &newTop = buyTop(id);
+            if (newTop == latestBuyTop) {
+                bt.first = false;
+            } else {
+                bt.first = true;
+                latestBuyTop = newTop;
+                bt.second = latestBuyTop;
             }
         }
-
-        auto newSellTop = sellTop(id);
-        if (newSellTop.has_value()) {
-            auto &value = newSellTop.value();
-            if (value != latestSellTop) {
-                latestSellTop = value;
-                pair.second = latestSellTop;
+        {
+            auto &bt = pair.second;
+            const auto &newTop = sellTop(id);
+            if (newTop == latestSellTop) {
+                bt.first = false;
+            } else {
+                bt.first = true;
+                latestSellTop = newTop;
+                bt.second = latestSellTop;
             }
         }
 
@@ -256,8 +266,8 @@ struct OrderBook {
         return (it != orderIdToNodeMap.end()) ? it->second : nullptr;
     }
 
-    TopOfBook<SIDE_BUY> latestBuyTop;
-    TopOfBook<SIDE_SELL> latestSellTop;
+    std::optional<TopOfBook<SIDE_BUY>> latestBuyTop;
+    std::optional<TopOfBook<SIDE_SELL>> latestSellTop;
     std::array<OrdersBySymbolId, SIZE> book;
     std::unordered_map<OrderIdentifier, FIFOOrderQueue::NodePtr, OrderIdentifierHasher> orderIdToNodeMap;
 };

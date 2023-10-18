@@ -51,12 +51,10 @@ struct MessageHandler {
         return true;
     }
 
-    using TopOfBookPair = std::pair<std::optional<TopOfBook<SIDE_BUY>>, std::optional<TopOfBook<SIDE_SELL>>>;
-
     void journalTopOfBook(const TopOfBookPair &pair) {
-        auto journalTop = [&](const auto &top) {
-            if (top.has_value()) {
-                consoleJournal.log(top.value());
+        auto journalTop = [&](auto &sideTop) {
+            if (sideTop.first) {
+                consoleJournal.log(sideTop.second);
             }
         };
         journalTop(pair.first);
@@ -117,5 +115,5 @@ struct MessageHandler {
 
     SymbolResolver symbolResolver;
     OrderBook<1024> orderBook;
-    Journal<std::variant<Ack, CancelAck, Trades, TopOfBook<SIDE_BUY>, TopOfBook<SIDE_SELL>, Flush>> consoleJournal;
+    Journal<std::variant<Ack, CancelAck, Trades, std::optional<TopOfBook<SIDE_BUY>>, std::optional<TopOfBook<SIDE_SELL>>, Flush>> consoleJournal;
 };
