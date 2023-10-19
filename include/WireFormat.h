@@ -39,9 +39,6 @@ struct OrderIdentifier {
 };
 
 struct Order {
-    OrderIdentifier oi{};
-    Qty qty{};
-
     union Symbol {
         Symbol() = default;
 
@@ -55,18 +52,20 @@ struct Order {
         int id;
     };
 
-    Symbol symbol{};
-    Price price{};
+    OrderIdentifier oi{};
     Side side{};
+    Symbol symbol{};
+    Qty qty{};
+    Price price{};
 
     Order() = default;
 
-    Order(UserId u, OrderId o, Qty q, SymbolId sid, Price p) :
-            oi{u, o}, qty(q), symbol(sid), price(p) {
+    Order(UserId u, OrderId o, Side side, SymbolId sid, Qty q, Price p) :
+            oi{u, o}, side{side}, symbol(sid), qty(q), price(p) {
     }
 
-    Order(UserId u, OrderId o, Qty q, char *name, Price p) :
-            oi{u, o}, qty(q), symbol(name), price(p) {
+    Order(UserId u, OrderId o, Side side, char *symbol, Qty q, Price p) :
+            oi{u, o}, side{side}, symbol(symbol), qty(q), price(p) {
     }
 
     bool operator!=(const Order &rhs) const {

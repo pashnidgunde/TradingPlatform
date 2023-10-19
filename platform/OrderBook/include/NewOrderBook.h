@@ -11,6 +11,8 @@
 #include "WireFormat.h"
 #include "OutgoingEvents.h"
 
+#include <iostream>
+
 using namespace std;
 
 struct OrderIdentifierHasher {
@@ -20,90 +22,52 @@ struct OrderIdentifierHasher {
     }
 };
 
-using FIFOOrderQueue = std::list<Order>;
-
-struct OrdersBySymbolId {
-    template<char SIDE, typename T>
-    struct OrdersBySide {
-
-        [[nodiscard]] const auto &ordersAtPrice(Price price) const {
-            return static_cast<const T *>(this)->orders.at(price);
-        }
-
-        auto &mutableOrdersAtPrice(Price price) {
-            return static_cast<T *>(this)->orders[price];
-        }
-
-        [[nodiscard]] bool isEmpty() const { return static_cast<const T *>(this)->orders.empty(); }
-
-        auto insert(const Order &order) {
-            auto &ll = mutableOrdersAtPrice(order.price);
-            auto node = ll.emplace_back(order);
-            return node;
-        }
-
-        [[nodiscard]] size_t size(Price price) const {
-            auto &ll = ordersAtPrice(price);
-            return ll.empty() ? 0 : ll.size();
-        }
-
-        [[nodiscard]] const auto &getAll() const {
-            return static_cast<const T *>(this)->orders;
-        }
-
-        [[nodiscard]] auto &mutableAll() {
-            return static_cast<T *>(this)->orders;
-        }
-    };
-
-    struct BuyOrders : public OrdersBySide<SIDE_BUY, BuyOrders> {
-        std::map<Price, std::list<Order>, std::greater<>> orders;
-    };
-
-    struct SellOrders : public OrdersBySide<SIDE_SELL, SellOrders> {
-        std::map<Price, std::list<Order>, std::less<>> orders;
-    };
-
-    BuyOrders buyOrders;
-    SellOrders sellOrders;
-
-};
-
-template<size_t SIZE = 1024>
 struct OrderBook {
 
-    const auto &buyOrders(SymbolId id) const {
-        return book[id].buyOrders;
-    }
+    template<char SIDE>
+    void addOrder(const Order &order);
 
-    auto &sellOrders(SymbolId id) const {
-        return book[id].sellOrders;
-    }
-
-    auto &mutableBuyOrders(SymbolId id) {
-        return book[id].buyOrders.mutableAll();
-    }
-
-    auto &mutableSellOrders(SymbolId id) {
-        return book[id].sellOrders.mutableAll();
-    }
-
-    [[nodiscard]] bool isEmpty(SymbolId symbol) const {
-        return buyOrders(symbol).isEmpty() && book[symbol].sellOrders.isEmpty();
-    }
-
-    [[maybe_unused]] auto addBuy(const Order &order) {
-        auto &ll = mutableBuyOrders(order.symbol.id)[(order.price)];
+    template<>
+    void addOrder<SIDE_BUY>(const Order &order) {
+        auto &ordersBySymbol = buyOrdersBySymbol[order.symbol.id];
+        auto &ll = ordersBySymbol[order.price];
         auto it = ll.insert(ll.end(), order);
         orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-        return it;
     }
 
-    [[maybe_unused]] auto addSell(const Order &order) {
-        auto &ll = mutableSellOrders(order.symbol.id)[(order.price)];
+    template<>
+    void addOrder<SIDE_SELL>(const Order &order) {
+        auto &ordersBySymbol = sellOrdersBySymbol[order.symbol.id];
+        auto &ll = ordersBySymbol[order.price];
         auto it = ll.insert(ll.end(), order);
         orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-        return it;
+    }
+
+    void addOrder(const Order &order) {
+        if (order.side == SIDE_BUY) {
+            addOrder<SIDE_BUY>(order);
+        } else {
+            addOrder<SIDE_SELL>(order);
+        }
+    }
+
+    template<char SIDE>
+    void addOrder(Order &&order);
+
+    template<>
+    void addOrder<SIDE_BUY>(Order &&order) {
+        auto &ordersBySymbol = buyOrdersBySymbol[order.symbol.id];
+        auto &ll = ordersBySymbol[order.price];
+        auto it = ll.insert(ll.end(), std::move(order));
+        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
+    }
+
+    template<>
+    void addOrder<SIDE_SELL>(Order &&order) {
+        auto &ordersBySymbol = sellOrdersBySymbol[order.symbol.id];
+        auto &ll = ordersBySymbol[order.price];
+        auto it = ll.insert(ll.end(), std::move(order));
+        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
     }
 
     void cross(std::list<Order> &buys, std::list<Order> &sells, const Price matchPrice, platform::Trades &trades) {
@@ -125,93 +89,118 @@ struct OrderBook {
         }
 
         auto removeCompletelyFilled = [&]() {
-            auto zeroRemainingQty = [](Order &order) {
+
+            auto zeroRemainingQty = [](const Order &order) {
                 return order.qty == 0;
             };
 
-            buys.remove_if(zeroRemainingQty);
-            sells.remove_if(zeroRemainingQty);
-        };
-        removeCompletelyFilled();
-    }
-
-    platform::Trades tryCross(const SymbolId id) {
-        auto canCross = [](const auto &buyPrice, const auto &sellPrice) {
-            return buyPrice >= sellPrice;
-        };
-
-        platform::Trades trades;
-        auto matchPrice = 0;
-        for (auto &buyPair: mutableBuyOrders(id)) {
-            for (auto &sellPair: mutableSellOrders(id)) {
-                if (!canCross(buyPair.first, sellPair.first))
-                    break;
-                matchPrice = std::min(buyPair.first, sellPair.first);
-                cross(buyPair.second, sellPair.second, matchPrice, trades);
-            }
-        }
-
-        auto removeEmptyPriceLevels = [&](SymbolId id) {
-            auto removeEmptyPriceLevel = [](auto &ordersByPriceLevel) {
-                for (auto it = ordersByPriceLevel.cbegin(); it != ordersByPriceLevel.cend();) {
-                    if (it->second.size() == 0) {
-                        ordersByPriceLevel.erase(it++);
+            auto removeZeroQtyOrders = [&](auto &orders) {
+                for (std::list<Order>::iterator it = orders.begin(); it != orders.end();) {
+                    if (zeroRemainingQty(*it)) {
+                        orderIdToNodeMap.erase({it->oi});
+                        it = orders.erase(it);
                     } else {
-                        // short circuit as levels are ordered
                         break;
                     }
                 }
             };
 
-            removeEmptyPriceLevel(mutableBuyOrders(id));
-            removeEmptyPriceLevel(mutableSellOrders(id));
-        };
-        removeEmptyPriceLevels(id);
+            removeZeroQtyOrders(buys);
+            removeZeroQtyOrders(sells);
 
+        };
+        removeCompletelyFilled();
+    }
+
+    platform::Trades tryCross(const SymbolId &symbol) {
+        platform::Trades trades;
+        auto canCross = [](const auto &buyPrice, const auto &sellPrice) {
+            return buyPrice >= sellPrice;
+        };
+
+        if (buyOrdersBySymbol.find(symbol) == buyOrdersBySymbol.end()) return trades;
+        if (sellOrdersBySymbol.find(symbol) == sellOrdersBySymbol.end()) return trades;
+
+
+        for (auto &buysAtPriceLevel: buyOrdersBySymbol.at(symbol)) {
+            for (auto &sellsAtPriceLevel: sellOrdersBySymbol.at(symbol)) {
+                if (!canCross(buysAtPriceLevel.first, sellsAtPriceLevel.first))
+                    break;
+                auto matchPrice = std::min(buysAtPriceLevel.first, sellsAtPriceLevel.first);
+                cross(buysAtPriceLevel.second, sellsAtPriceLevel.second, matchPrice, trades);
+            }
+        }
+
+        auto removeEmptyPriceLevel = [&](auto &ordersByPriceLevel) {
+            for (auto it = ordersByPriceLevel.cbegin(); it != ordersByPriceLevel.cend();) {
+                if (it->second.empty()) {
+                    ordersByPriceLevel.erase(it++);
+                } else {
+                    // short circuit as levels are ordered
+                    break;
+                }
+            }
+        };
+
+        auto removeEmptyPriceLevels = [&](SymbolId symbol) {
+            removeEmptyPriceLevel(buyOrdersBySymbol.at(symbol));
+            removeEmptyPriceLevel(sellOrdersBySymbol.at(symbol));
+        };
+        removeEmptyPriceLevels(symbol);
         return trades;
     }
 
     void flush() {
-        auto clearAll = [](auto &mutableOrders) {
-            for (auto &pair: mutableOrders) {
-                pair.second.clear();
-            }
-            mutableOrders.clear();
-        };
-
-        for (size_t i = 0; i < SIZE; ++i) {
-            clearAll(mutableBuyOrders(i));
-            clearAll(mutableSellOrders(i));
-        }
+        buyOrdersBySymbol.clear();
+        sellOrdersBySymbol.clear();
+        orderIdToNodeMap.clear();
     }
 
 
     void cancel(const OrderIdentifier &oi) {
         auto it = orderIdToNodeMap.find(oi);
         if (it == orderIdToNodeMap.end()) {
-            // cancel reject
-            // too late to cancel ?
             return;
         }
         auto &iter = it->second;
         auto &order = *iter;
         if (order.side == SIDE_BUY) {
-            auto &orderMap = mutableBuyOrders(order.symbol.id);
-            auto &ll = orderMap[order.price];
+            auto &orderMap = buyOrdersBySymbol.at(order.symbol.id);
+            auto price = order.price;
+            auto &ll = orderMap.at(price);
             ll.erase(iter);
             if (ll.empty()) {
-                orderMap.erase(order.price);
+                orderMap.erase(price);
             }
         } else {
-            auto &orderMap = mutableSellOrders(order.symbol.id);
-            auto &ll = orderMap[order.price];
+            auto &orderMap = sellOrdersBySymbol.at(order.symbol.id);
+            auto price = order.price;
+            auto &ll = orderMap[price];
             ll.erase(iter);
             if (ll.empty()) {
-                orderMap.erase(order.price);
+                orderMap.erase(price);
             }
         }
     }
 
-    std::array<OrdersBySymbolId, SIZE> book;
+    bool isEmpty() const {
+        return buyOrdersBySymbol.empty() && sellOrdersBySymbol.empty();
+    }
+
+    using BuyOrdersAtPrice = std::map<Price, std::list<Order>, std::greater<>>;
+    using SellOrdersAtPrice = std::map<Price, std::list<Order>, std::less<>>;
+
+    std::optional<BuyOrdersAtPrice> buyOrders(SymbolId id) {
+        return (buyOrdersBySymbol.find(id) == buyOrdersBySymbol.end()) ?
+               std::nullopt : std::make_optional<BuyOrdersAtPrice>(buyOrdersBySymbol.at(id));
+    }
+
+    std::optional<SellOrdersAtPrice> sellOrders(SymbolId id) {
+        return (sellOrdersBySymbol.find(id) == sellOrdersBySymbol.end()) ?
+               std::nullopt : std::make_optional<SellOrdersAtPrice>(sellOrdersBySymbol.at(id));
+    }
+
+    std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
+    std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
 };

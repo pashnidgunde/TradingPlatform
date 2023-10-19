@@ -3,9 +3,7 @@ project(TestOrderBook)
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}
-        TestLLIterator.cpp
-        TestReverseIterator.cpp
-        TestOrderBook.cpp
+        TestNewOrderBook.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../include)

@@ -33,11 +33,11 @@ struct NewMessageHandler {
         return isValidMsgType(msg.type, msg.length);
     }
 
-    auto addToSymbolBook(const Order *order) {
+    auto addToSymbolBook(Order *order) {
         if (order->side == SIDE_BUY) {
-            orderBook.addBuy(*order);
+            orderBook.addOrder(std::move(*order));
         } else if (order->side == SIDE_SELL) {
-            orderBook.addSell(*order);
+            orderBook.addOrder(std::move(*order));
         } else {
             std::cerr << "Invalid side";
             // NACK
@@ -54,7 +54,6 @@ struct NewMessageHandler {
         auto *order = reinterpret_cast<Order *>(msg.payload);
 
         order->symbol.id = symbolResolver.resolve(order->symbol.name);
-
         if (!addToSymbolBook(order)) return;
 
         auto trades = orderBook.tryCross(order->symbol.id);
@@ -92,6 +91,6 @@ struct NewMessageHandler {
     }
 
     SymbolResolver symbolResolver;
-    OrderBook<1024> orderBook;
+    OrderBook orderBook;
 };
 

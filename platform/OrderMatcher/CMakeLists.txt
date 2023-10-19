@@ -5,7 +5,6 @@ add_library(${PROJECT_NAME}
         include/SymbolResolver.h
         include/MessageQueue.h
         OrderMatcher.cpp
-        include/MessageHandler.h
         include/Journal.h
         include/TSQueue.h
         include/NewMessageHandler.h
