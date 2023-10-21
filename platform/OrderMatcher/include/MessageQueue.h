@@ -1,7 +1,6 @@
 #pragma once
 
 #include <thread>
-#include <unordered_map>
 #include "NewMessageHandler.h"
 #include "TSQueue.h"
 
@@ -15,13 +14,10 @@ namespace platform {
             q.push(*msg);
         }
 
-        [[noreturn]] void deque() {
-            Message msg;
-            while (true) {
-                msg = q.pop();
-                handler.onIncoming(msg);
-                // SEND PENDING STATUS BACK
-            }
+        void deque() {
+            Message msg = q.pop();
+            handler.onIncoming(msg);
+            // SEND PENDING STATUS BACK
         }
 
         ~MessageQueue() {

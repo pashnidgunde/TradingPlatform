@@ -69,7 +69,7 @@ namespace platform {
         }
 
         bool operator!=(const TopOfBook &rhs) const {
-            return !(rhs == *this);
+            return rhs != *this;
         }
 
         void flush() {

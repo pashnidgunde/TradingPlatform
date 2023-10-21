@@ -5,9 +5,10 @@ add_library(${PROJECT_NAME}
         include/SymbolResolver.h
         include/MessageQueue.h
         OrderMatcher.cpp
-        include/Journal.h
-        include/TSQueue.h
+        ../OrderBook/include/OrderEventListner.h
+        ../../include/TSQueue.h
         include/NewMessageHandler.h
+        include/MemoryMappedIO.h
 )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Boost_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PUBLIC ../OrderBook/include)

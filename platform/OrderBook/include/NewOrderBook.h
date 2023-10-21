@@ -7,10 +7,11 @@
 #include <unordered_map>
 #include <list>
 #include <functional>
+#include <variant>
 
 #include "WireFormat.h"
 #include "OutgoingEvents.h"
-
+#include "OrderEventListner.h"
 #include <iostream>
 
 using namespace std;
@@ -203,4 +204,5 @@ struct OrderBook {
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
+    OrderEventListner<std::variant<platform::Ack>> listner;
 };
