@@ -3,7 +3,6 @@ find_package(Boost REQUIRED)
 
 add_library(${PROJECT_NAME}
         include/SymbolResolver.h
-        include/MessageQueue.h
         OrderMatcher.cpp
         ../OrderBook/include/OrderEventListner.h
         ../../include/TSQueue.h

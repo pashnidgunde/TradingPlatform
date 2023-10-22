@@ -38,9 +38,10 @@ private:
                 std::cout << event << std::endl;
             }
         };
-
-        auto event = events.pop();
-        std::visit(visitor, event);
+        while(true) {
+            auto event = events.pop();
+            std::visit(visitor, event);
+        }
     }
 
     TSQueue<T> events;

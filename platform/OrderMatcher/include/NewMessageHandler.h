@@ -7,19 +7,19 @@
 #include "../../OrderBook/include/OrderEventListner.h"
 
 struct NewMessageHandler {
-    void onIncoming(Message &msg) {
+    void onIncoming(const Message* msg) {
         //validate
         if (!isValid(msg)) {
-            std::cerr << "Failed to validate message" << std::endl;
+            std::runtime_error("Failed to validate message");
             // NACK
             return;
         }
 
         //handler
-        handleIncoming(msg);
+        handleIncoming(const_cast<Message*>(msg));
     }
 
-    static bool isValid(const Message &msg) {
+    static bool isValid(const Message *msg) {
         auto isValidMsgType = [](char msgType, size_t msgLen) {
             if (msgType == MSGTYPE_NEW) {
                 return msgLen == sizeof(Order);
@@ -31,63 +31,32 @@ struct NewMessageHandler {
             return false;
         };
 
-        return isValidMsgType(msg.type, msg.length);
+        return isValidMsgType(msg->type, msg->length);
     }
 
-    auto addToSymbolBook(Order *order) {
+    void addToSymbolBook(Order *order) {
         if (order->side == SIDE_BUY) {
-            orderBook.addOrder(std::move(*order));
+            orderBook.addOrder(order);
         } else if (order->side == SIDE_SELL) {
-            orderBook.addOrder(std::move(*order));
+            orderBook.addOrder(order);
         } else {
-            std::cerr << "Invalid side";
+            std::runtime_error("Invalid side");
             // NACK
-            return false;
         }
-        return true;
     }
 
-    template<MsgType>
-    void handle(Message &) {}
-
-    template<>
-    void handle<MSGTYPE_NEW>(Message &msg) {
-        auto *order = reinterpret_cast<Order *>(msg.payload);
-
-        order->symbol.id = symbolResolver.resolve(order->symbol.name);
-        if (!addToSymbolBook(order)) return;
-
-        auto trades = orderBook.tryCross(order->symbol.id);
-
-    }
-
-    template<>
-    void handle<MSGTYPE_CANCEL>(Message &msg) {
-        const auto *c = reinterpret_cast<const CancelOrder *>(msg.payload);
-        orderBook.cancel(c->oi);
-    }
-
-    template<>
-    void handle<MSGTYPE_FLUSH>(Message & /*unused*/) {
-        orderBook.flush();
-    }
-
-    void handleIncoming(Message &msg) {
-        switch (msg.type) {
-            case MSGTYPE_NEW :
-                handle<MSGTYPE_NEW>(msg);
-                break;
-
-            case MSGTYPE_CANCEL :
-                handle<MSGTYPE_CANCEL>(msg);
-                break;
-
-            case MSGTYPE_FLUSH :
-                handle<MSGTYPE_FLUSH>(msg);
-                break;
-
-            default:
-                std::cerr << "Invalid instruction";
+    void handleIncoming(Message *msg) {
+        if (msg->type == MSGTYPE_NEW) {
+            auto *order = reinterpret_cast<Order *>(msg->payload);
+            order->symbol.id = symbolResolver.resolve(order->symbol.name);
+            addToSymbolBook(order);
+        } else if (msg->type == MSGTYPE_CANCEL) {
+            const auto *c = reinterpret_cast<const CancelOrder *>(msg->payload);
+            orderBook.cancel(c->oi);
+        } else if (msg->type == MSGTYPE_FLUSH) {
+            orderBook.flush();
+        } else {
+            std::runtime_error("Invalid MsgType");
         }
     }
 

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ostream>
 #include <functional>
+#include <cstring>
 
 using Price = int;
 using OrderId = int;

@@ -19,17 +19,17 @@ TEST_F(TestNewOrderBook, IsisEmptyInitially) {
 TEST_F(TestNewOrderBook, testOrderConstructor) {
     OrderBook b;
     constexpr int SYMBOL_IBM = 1;
-    b.addOrder(Order(1, 1, 'B', SYMBOL_IBM, 100, 10));
+    b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 10));
     EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).has_value());
     EXPECT_FALSE(b.sellOrders(SYMBOL_IBM).has_value());
-    b.addOrder(Order(1, 1, 'S', SYMBOL_IBM, 100, 11));
+    b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 11));
     EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).has_value());
 
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM).value().size(), 1);
     EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 1);
 
-    b.addOrder(Order(1, 1, 'S', SYMBOL_IBM, 100, 12));
-    b.addOrder(Order(1, 1, 'S', SYMBOL_IBM, 100, 13));
+    b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 12));
+    b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 13));
     EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 3);
 }
 
@@ -47,7 +47,7 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
     }
 
     for (auto &input: inputs) {
-        b.addOrder(input);
+        b.addOrder(&input);
     }
 
     std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
@@ -61,7 +61,7 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
     for (const auto &buy: buys.value()) {
         const auto &ll = buy.second;
         for (auto &order: ll) {
-            actual.emplace_back(order);
+            actual.emplace_back(*order);
         }
     }
 
@@ -82,7 +82,7 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
     }
 
     for (auto &input: inputs) {
-        b.addOrder(input);
+        b.addOrder(&input);
     }
 
     std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
@@ -96,7 +96,7 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
     for (const auto &sell: sells.value()) {
         const auto &ll = sell.second;
         for (auto &order: ll) {
-            actual.emplace_back(order);
+            actual.emplace_back(*order);
         }
     }
 
@@ -107,9 +107,9 @@ TEST_F(TestNewOrderBook, testNoMatch) {
     OrderBook b;
     constexpr int SYMBOL_IBM = 1;
     for (int i = 0; i < 10; ++i) {
-        b.addOrder(Order(i, i, 'B', SYMBOL_IBM, 10, 90));
+        b.addOrder(new Order(i, i, 'B', SYMBOL_IBM, 10, 90));
     }
-    b.addOrder(Order(2, 1, 'S', SYMBOL_IBM, 100, 100));
+    b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 100));
     auto matches = b.tryCross(SYMBOL_IBM);
     EXPECT_TRUE(matches.empty());
 }
@@ -118,8 +118,8 @@ TEST_F(TestNewOrderBook, testCross) {
     OrderBook b;
     constexpr int SYMBOL_IBM = 1;
 
-    b.addOrder(Order(2, 1, 'S', SYMBOL_IBM, 10, 10));
-    b.addOrder(Order(1, 1, 'B', SYMBOL_IBM, 10, 11));
+    b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 10, 10));
+    b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 10, 11));
 
     auto matches = b.tryCross(SYMBOL_IBM);
 
@@ -136,9 +136,9 @@ TEST_F(TestNewOrderBook, testSellSweep) {
     std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
-        b.addOrder(Order(2, i, 'S', SYMBOL_IBM, 10, 10));
+        b.addOrder(new Order(2, i, 'S', SYMBOL_IBM, 10, 10));
     }
-    b.addOrder(Order(1, 1, 'B', SYMBOL_IBM, 100, 11));
+    b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 11));
     auto matches = b.tryCross(SYMBOL_IBM);
 
     EXPECT_EQ(matches.size(), 10);
@@ -154,9 +154,9 @@ TEST_F(TestNewOrderBook, testBuySweep) {
     std::vector<Order> inputs;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
-        b.addOrder(Order(2, i, 'B', SYMBOL_IBM, 10, 10));
+        b.addOrder(new Order(2, i, 'B', SYMBOL_IBM, 10, 10));
     }
-    b.addOrder(Order(2, 1, 'S', SYMBOL_IBM, 100, 10));
+    b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 10));
     auto matches = b.tryCross(1);
 
     EXPECT_EQ(matches.size(), 10);
@@ -168,7 +168,7 @@ TEST_F(TestNewOrderBook, testBuySweep) {
 TEST_F(TestNewOrderBook, testCancel) {
     OrderBook b;
     constexpr int SYMBOL_IBM = 1;
-    b.addOrder(Order(2, 1, 'B', SYMBOL_IBM, 10, 10));
+    b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 10));
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 1);
     b.cancel({2, 1});
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 0);

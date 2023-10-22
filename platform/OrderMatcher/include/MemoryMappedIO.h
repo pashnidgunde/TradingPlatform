@@ -1,66 +1,63 @@
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <cmath>
+#include <iostream>
+#include "WireFormat.h"
+#include <algorithm>
 
 class MemoryMappedFile {
 
 private:
-
-    char *m_buffer = nullptr;
-    size_t m_offset = 0;
-    size_t m_size = 0;
+    char *m_start = nullptr;
+    char *m_current = nullptr;
+    char *m_toSend = nullptr;
+    int m_fd = -1;
+    long long N = std::pow(2,10);
 
 public:
-    using Offset = size_t;
-
-    MemoryMappedFile(char *buffer, size_t size, Offset offset = 0) :
-            m_buffer(buffer),
-            m_offset(offset),
-            m_size(size) {
+    MemoryMappedFile(){
+        if (!this->open()) {
+            throw "Failed to open file";
+        }
+        m_current = m_start;
     }
 
-    MemoryMappedFile() = delete;
-
-    //int offset() const { return m_offset; }
-    //char * buffer_ptr() { return m_buffer; }
-
-    bool has_more() const { return m_offset < m_size; };
-
-    template<typename T>
-    void advance() {
-        assert(m_offset + sizeof(T) <= m_size);
-        m_buffer += sizeof(T);
-        m_offset += sizeof(T);
+    ~MemoryMappedFile() {
+        int err = munmap(m_start,N);
+        if (err != 0) {
+            std::cerr << "Failed to unmap file";
+        }
     }
 
-    template<typename T>
-    T read() {
-        /*
-        assert(m_offset + sizeof(T) <= m_size);
-        T temp = *(reinterpret_cast<T *>(m_buffer));
-        m_buffer += sizeof(T);
-        return temp;
-        */
-
-        // avoid creating temporary
-        advance<T>();
-        return *(reinterpret_cast<T *>(m_buffer - sizeof(T)));
+    bool open() {
+        m_fd = ::open("./.orders.bin", O_WRONLY);
+        m_start = (char *) mmap(NULL, N * sizeof(Message), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, m_fd, 0);
+        m_toSend = m_start;
+        if (m_start == MAP_FAILED) {
+            return false;
+        }
+        return true;
     }
 
-    template<typename T>
-    T read(Offset offset) {
-        assert(m_offset + offset <= m_size);
-        return *(reinterpret_cast<T *>(m_buffer + offset));
+    char *& nextReceive() {
+        return m_current;
     }
 
-    void advance(Offset offset) {
-        m_buffer += offset;
-        m_offset += offset;
+    bool anyMoreToSend() {
+        return (m_current != m_start) && (m_toSend < m_current);
     }
 
-    void open() {
-        m_fd = open("./OUCHLMM2.incoming.packets", O_RDONLY, S_IRUSR);
-        m_file_buffer = (char *) mmap(NULL, m_buffer_size, PROT_READ, MAP_PRIVATE, m_fd, 0);
+    char* & nextToSend() {
+        return m_toSend;
     }
 
-    int m_fd = -1;
-    char *m_file_buffer = nullptr;
+    void advanceReceive() {
+        m_current += sizeof(Message);
+    }
+
+    void advanceSent() {
+        m_toSend += sizeof(Message);
+    }
+
 };

@@ -23,64 +23,40 @@ struct OrderIdentifierHasher {
     }
 };
 
+using BuyOrdersAtPrice = std::map<Price, std::list<Order*>, std::greater<>>;
+using SellOrdersAtPrice = std::map<Price, std::list<Order*>, std::less<>>;
+
+
 struct OrderBook {
 
-    template<char SIDE>
-    void addOrder(const Order &order);
+    void addOrder(Order* order) {
+        listner.onEvent(platform::Ack{order->oi});
 
-    template<>
-    void addOrder<SIDE_BUY>(const Order &order) {
-        auto &ordersBySymbol = buyOrdersBySymbol[order.symbol.id];
-        auto &ll = ordersBySymbol[order.price];
-        auto it = ll.insert(ll.end(), order);
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-    }
-
-    template<>
-    void addOrder<SIDE_SELL>(const Order &order) {
-        auto &ordersBySymbol = sellOrdersBySymbol[order.symbol.id];
-        auto &ll = ordersBySymbol[order.price];
-        auto it = ll.insert(ll.end(), order);
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-    }
-
-    void addOrder(const Order &order) {
-        if (order.side == SIDE_BUY) {
-            addOrder<SIDE_BUY>(order);
+        std::list<Order*>::iterator it;
+        if (order->side == SIDE_BUY) {
+            auto &buyOrdersBySide = buyOrdersBySymbol[order->symbol.id];
+            auto &ll = buyOrdersBySide[order->price];
+            it = ll.insert(ll.end(), order);
+        } else if (order->side == SIDE_SELL){
+            auto &sellOrdersBySide = sellOrdersBySymbol[order->symbol.id];
+            auto &ll = sellOrdersBySide[order->price];
+            it = ll.insert(ll.end(), order);
         } else {
-            addOrder<SIDE_SELL>(order);
+            std::runtime_error("Unsupported side");
         }
+        orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = it;
     }
 
-    template<char SIDE>
-    void addOrder(Order &&order);
+    void cross(std::list<Order*> &buys, std::list<Order*> &sells, const Price matchPrice, platform::Trades &trades) {
+        auto adjustOpenQty = [](Order *o, int qty) { o->qty -= qty; };
 
-    template<>
-    void addOrder<SIDE_BUY>(Order &&order) {
-        auto &ordersBySymbol = buyOrdersBySymbol[order.symbol.id];
-        auto &ll = ordersBySymbol[order.price];
-        auto it = ll.insert(ll.end(), std::move(order));
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-    }
-
-    template<>
-    void addOrder<SIDE_SELL>(Order &&order) {
-        auto &ordersBySymbol = sellOrdersBySymbol[order.symbol.id];
-        auto &ll = ordersBySymbol[order.price];
-        auto it = ll.insert(ll.end(), std::move(order));
-        orderIdToNodeMap[{order.oi.userId, order.oi.orderId}] = it;
-    }
-
-    void cross(std::list<Order> &buys, std::list<Order> &sells, const Price matchPrice, platform::Trades &trades) {
-        auto adjustOpenQty = [](Order &o, int qty) { o.qty -= qty; };
-
-        auto completelyFilled = [](Order &o) { return o.qty == 0; };
+        auto completelyFilled = [](const Order *o) { return o->qty == 0; };
 
         auto matchQty = 0;
         for (auto &buy: buys) {
             for (auto &sell: sells) {
-                matchQty = std::min(buy.qty, sell.qty);
-                trades.emplace_back(buy.oi, sell.oi, matchPrice, matchQty);
+                matchQty = std::min(buy->qty, sell->qty);
+                trades.emplace_back(buy->oi, sell->oi, matchPrice, matchQty);
                 adjustOpenQty(buy, matchQty);
                 adjustOpenQty(sell, matchQty);
                 if (completelyFilled(buy)) {
@@ -90,15 +66,14 @@ struct OrderBook {
         }
 
         auto removeCompletelyFilled = [&]() {
-
-            auto zeroRemainingQty = [](const Order &order) {
-                return order.qty == 0;
+            auto zeroRemainingQty = [](const Order* order) {
+                return order->qty == 0;
             };
 
             auto removeZeroQtyOrders = [&](auto &orders) {
-                for (std::list<Order>::iterator it = orders.begin(); it != orders.end();) {
+                for (std::list<Order*>::iterator it = orders.begin(); it != orders.end();) {
                     if (zeroRemainingQty(*it)) {
-                        orderIdToNodeMap.erase({it->oi});
+                        orderIdToNodeMap.erase({(*it)->oi});
                         it = orders.erase(it);
                     } else {
                         break;
@@ -165,17 +140,17 @@ struct OrderBook {
         }
         auto &iter = it->second;
         auto &order = *iter;
-        if (order.side == SIDE_BUY) {
-            auto &orderMap = buyOrdersBySymbol.at(order.symbol.id);
-            auto price = order.price;
+        if (order->side == SIDE_BUY) {
+            auto &orderMap = buyOrdersBySymbol.at(order->symbol.id);
+            auto price = order->price;
             auto &ll = orderMap.at(price);
             ll.erase(iter);
             if (ll.empty()) {
                 orderMap.erase(price);
             }
         } else {
-            auto &orderMap = sellOrdersBySymbol.at(order.symbol.id);
-            auto price = order.price;
+            auto &orderMap = sellOrdersBySymbol.at(order->symbol.id);
+            auto price = order->price;
             auto &ll = orderMap[price];
             ll.erase(iter);
             if (ll.empty()) {
@@ -187,9 +162,6 @@ struct OrderBook {
     bool isEmpty() const {
         return buyOrdersBySymbol.empty() && sellOrdersBySymbol.empty();
     }
-
-    using BuyOrdersAtPrice = std::map<Price, std::list<Order>, std::greater<>>;
-    using SellOrdersAtPrice = std::map<Price, std::list<Order>, std::less<>>;
 
     std::optional<BuyOrdersAtPrice> buyOrders(SymbolId id) {
         return (buyOrdersBySymbol.find(id) == buyOrdersBySymbol.end()) ?
@@ -203,6 +175,6 @@ struct OrderBook {
 
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
-    std::unordered_map<OrderIdentifier, std::list<Order>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
+    std::unordered_map<OrderIdentifier, std::list<Order*>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
     OrderEventListner<std::variant<platform::Ack>> listner;
 };
