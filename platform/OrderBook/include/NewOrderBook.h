@@ -26,25 +26,70 @@ struct OrderIdentifierHasher {
 using BuyOrdersAtPrice = std::map<Price, std::list<Order*>, std::greater<>>;
 using SellOrdersAtPrice = std::map<Price, std::list<Order*>, std::less<>>;
 
+struct tob {
+    const Order* p = nullptr;
+    const Order *po = nullptr;
+
+    template<typename T>
+    void pre(const T& orders) {
+        if (!orders.empty()) {
+            if (!orders.begin()->second.empty()) {
+                if (!orders.begin()->second.begin()->second.empty()) {
+                    p = orders.begin()->second.begin()->second.front();
+                }
+            }
+        }
+    }
+
+    template<typename T>
+    void post(const T& orders) {
+        if (!orders.empty()) {
+            if (!orders.begin()->second.empty()) {
+                if (!orders.begin()->second.begin()->second.empty()) {
+                    po = orders.begin()->second.begin()->second.front();
+                }
+            }
+        }
+    }
+
+    const Order* latest() {
+        return (p != po) ? po : nullptr;
+    }
+};
+
+
 
 struct OrderBook {
+    template<typename T>
+    std::list<Order*>::iterator _addOrder(T& existing, Order* incoming) {
+        auto &buyOrdersBySide = existing[incoming->symbol.id];
+        auto &ll = buyOrdersBySide[incoming->price];
+        return ll.insert(ll.end(), incoming);
+    }
 
     void addOrder(Order* order) {
         listner.onEvent(platform::Ack{order->oi});
-
+        tob t;
         std::list<Order*>::iterator it;
         if (order->side == SIDE_BUY) {
-            auto &buyOrdersBySide = buyOrdersBySymbol[order->symbol.id];
-            auto &ll = buyOrdersBySide[order->price];
-            it = ll.insert(ll.end(), order);
+            t.pre(buyOrdersBySymbol);
+            it = _addOrder(buyOrdersBySymbol,order);
+            t.post(buyOrdersBySymbol);
         } else if (order->side == SIDE_SELL){
-            auto &sellOrdersBySide = sellOrdersBySymbol[order->symbol.id];
-            auto &ll = sellOrdersBySide[order->price];
-            it = ll.insert(ll.end(), order);
+            t.pre(sellOrdersBySymbol);
+            it = _addOrder(sellOrdersBySymbol,order);
+            t.post(sellOrdersBySymbol);
         } else {
             std::runtime_error("Unsupported side");
         }
         orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = it;
+
+        tryCross(order->symbol.id);
+
+        const Order *tob = t.latest();
+        if (tob) {
+            listner.onEvent(platform::TopOfBook(tob));
+        }
     }
 
     void cross(std::list<Order*> &buys, std::list<Order*> &sells, const Price matchPrice, platform::Trades &trades) {
@@ -123,6 +168,8 @@ struct OrderBook {
             removeEmptyPriceLevel(sellOrdersBySymbol.at(symbol));
         };
         removeEmptyPriceLevels(symbol);
+
+        listner.onEvent(trades);
         return trades;
     }
 
@@ -130,6 +177,8 @@ struct OrderBook {
         buyOrdersBySymbol.clear();
         sellOrdersBySymbol.clear();
         orderIdToNodeMap.clear();
+
+        listner.onEvent(Flush{});
     }
 
 
@@ -140,7 +189,9 @@ struct OrderBook {
         }
         auto &iter = it->second;
         auto &order = *iter;
+        tob t;
         if (order->side == SIDE_BUY) {
+            t.pre(buyOrdersBySymbol);
             auto &orderMap = buyOrdersBySymbol.at(order->symbol.id);
             auto price = order->price;
             auto &ll = orderMap.at(price);
@@ -148,7 +199,9 @@ struct OrderBook {
             if (ll.empty()) {
                 orderMap.erase(price);
             }
+            t.post(buyOrdersBySymbol);
         } else {
+            t.pre(sellOrdersBySymbol);
             auto &orderMap = sellOrdersBySymbol.at(order->symbol.id);
             auto price = order->price;
             auto &ll = orderMap[price];
@@ -156,6 +209,11 @@ struct OrderBook {
             if (ll.empty()) {
                 orderMap.erase(price);
             }
+            t.post(sellOrdersBySymbol);
+        }
+        const Order *tob = t.latest();
+        if (tob) {
+            listner.onEvent(platform::TopOfBook(tob));
         }
     }
 
@@ -176,5 +234,5 @@ struct OrderBook {
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order*>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
-    OrderEventListner<std::variant<platform::Ack>> listner;
+    OrderEventListner<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>> listner;
 };

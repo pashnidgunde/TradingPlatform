@@ -88,7 +88,6 @@ static_assert(sizeof(CancelOrder) == 8);
 
 struct Flush {
     friend std::ostream &operator<<(std::ostream &os, const Flush &) {
-        os << std::endl;
         return os;
     }
 };

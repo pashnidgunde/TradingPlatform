@@ -4,6 +4,7 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}
         TestNewOrderBook.cpp
+        TestLLIterator.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../include)
