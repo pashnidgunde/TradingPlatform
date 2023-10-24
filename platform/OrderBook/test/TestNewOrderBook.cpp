@@ -60,10 +60,10 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
     actual.reserve(10);
     for (const auto &buy: buys.value()) {
         const auto &ll = buy.second;
-        for (auto &order: ll) {
+        for (auto order: ll) {
             actual.emplace_back(*order);
         }
-    }
+
 
     EXPECT_EQ(inputs, actual);
 }

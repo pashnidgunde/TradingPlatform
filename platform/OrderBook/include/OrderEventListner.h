@@ -12,9 +12,11 @@ class OrderEventListner {
 public:
     OrderEventListner() {
         t = std::thread(&OrderEventListner::handleEvent, this);
+        keep_running = true;
     }
 
     ~OrderEventListner() {
+        keep_running = false;
         //Join thread
         if (t.joinable()) {
             t.join();
@@ -38,7 +40,7 @@ private:
                 std::cout << event << std::endl;
             }
         };
-        while(true) {
+        while(keep_running) {
             auto event = events.pop();
             std::visit(visitor, event);
         }
@@ -46,4 +48,5 @@ private:
 
     TSQueue<T> events;
     std::thread t{};
+    bool keep_running = false;
 };

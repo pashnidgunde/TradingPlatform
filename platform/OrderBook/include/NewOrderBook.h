@@ -52,7 +52,7 @@ struct tob {
         }
     }
 
-    const Order* latest() {
+    [[nodiscard]] const Order* latest() const {
         return (p != po) ? po : nullptr;
     }
 };
@@ -80,7 +80,7 @@ struct OrderBook {
             it = _addOrder(sellOrdersBySymbol,order);
             t.post(sellOrdersBySymbol);
         } else {
-            std::runtime_error("Unsupported side");
+            throw std::runtime_error("Unsupported side");
         }
         orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = it;
 
@@ -116,7 +116,7 @@ struct OrderBook {
             };
 
             auto removeZeroQtyOrders = [&](auto &orders) {
-                for (std::list<Order*>::iterator it = orders.begin(); it != orders.end();) {
+                for (auto it = orders.begin(); it != orders.end();) {
                     if (zeroRemainingQty(*it)) {
                         orderIdToNodeMap.erase({(*it)->oi});
                         it = orders.erase(it);
