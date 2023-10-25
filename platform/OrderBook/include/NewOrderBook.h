@@ -59,28 +59,29 @@ struct tob {
 
 class OrderBook {
 public:
-    void addOrder(Order *order) {
-        listner.onEvent(platform::Ack{order->oi});
+
+    template<typename T>
+    void _add(T& orders, Order *order) {
         tob t;
-        std::list<Order *>::iterator it;
-        if (order->side == SIDE_BUY) {
-            t.pre(buyOrdersBySymbol);
-            it = _addOrder(buyOrdersBySymbol, order);
-            t.post(buyOrdersBySymbol);
-        } else if (order->side == SIDE_SELL) {
-            t.pre(sellOrdersBySymbol);
-            it = _addOrder(sellOrdersBySymbol, order);
-            t.post(sellOrdersBySymbol);
-        } else {
-            throw std::runtime_error("Unsupported side");
-        }
+        t.pre(orders);
+        std::list<Order *>::iterator it = _addOrder(orders, order);
         orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = it;
-
         try_cross(order->symbol.id);
-
+        t.post(orders);
         const Order *tob = t.latest();
         if (tob) {
             listner.onEvent(platform::TopOfBook(tob));
+        }
+    }
+
+    void addOrder(Order *order) {
+        listner.onEvent(platform::Ack{order->oi});
+        if (order->side == SIDE_BUY) {
+            _add(buyOrdersBySymbol, order);
+        } else if (order->side == SIDE_SELL) {
+            _add(sellOrdersBySymbol, order);
+        } else {
+            throw std::runtime_error("Unsupported side");
         }
     }
 
