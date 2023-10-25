@@ -11,25 +11,34 @@ template<typename T>
 class OrderEventListner {
 public:
     OrderEventListner() {
-        t = std::thread(&OrderEventListner::handleEvent, this);
+        runner = std::thread(&OrderEventListner::run, this);
         keep_running = true;
     }
 
     ~OrderEventListner() {
         keep_running = false;
+        cv.notify_one();
         //Join thread
-        if (t.joinable()) {
-            t.join();
+        if (runner.joinable()) {
+            runner.join();
         }
     }
 
     template<typename Event>
     void onEvent(const Event &msg) {
-        events.push(msg);
+        // Acquire lock
+        std::lock_guard<std::mutex> lock(mtx);
+
+        // Add item
+        eventQ.push(msg);
+
+        // Notify one thread that
+        // is waiting
+        cv.notify_one();
     }
 
 private:
-    void handleEvent() {
+    void run() {
         auto visitor = [](auto &&event) {
             using EventType = std::decay_t<decltype(event)>;
             if constexpr (std::is_same_v<EventType, std::list<platform::Trade>>) {
@@ -40,13 +49,31 @@ private:
                 std::cout << event << std::endl;
             }
         };
-        while(keep_running) {
-            auto event = events.pop();
-            std::visit(visitor, event);
+
+        // acquire lock
+        std::unique_lock<std::mutex> lock(mtx);
+
+        while (true) {
+            // wait until queue is not empty
+            cv.wait(lock, [this]() { return !keep_running || !eventQ.empty(); });
+
+            if (!keep_running) break;
+
+            // retrieve item
+            std::visit(visitor, eventQ.front());
+            eventQ.pop();
         }
     }
 
-    TSQueue<T> events;
-    std::thread t{};
-    bool keep_running = false;
+    // Underlying queue
+    std::queue<T> eventQ;
+
+    // mutex for thread synchronization
+    std::mutex mtx;
+
+    // Condition variable for signaling
+    std::condition_variable cv;
+
+    std::thread runner{};
+    std::atomic<bool> keep_running;
 };

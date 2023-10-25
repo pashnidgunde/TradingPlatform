@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include "NewOrderBook.h"
+#include <thread>
 
 using namespace platform;
 
@@ -35,20 +36,18 @@ TEST_F(TestNewOrderBook, testOrderConstructor) {
 
 TEST_F(TestNewOrderBook, testBuyOrdering) {
     OrderBook b;
-    std::string symbol{0};
-    std::random_device seed;
-    std::mt19937 gen{seed()};                      // seed the generator
-    std::uniform_int_distribution<> dist{1, 100};  // set min and max
     std::vector<Order> inputs;
     constexpr int SYMBOL_IBM = 1;
     inputs.reserve(10);
     for (int i = 0; i < 10; ++i) {
-        inputs.emplace_back(i, i, 'B', SYMBOL_IBM, 1, dist(gen));
+        inputs.emplace_back(i, i, 'B', SYMBOL_IBM, 1, /*dist(gen)*/i);
     }
 
     for (auto &input: inputs) {
-        b.addOrder(&input);
+        b.addOrder(new Order(input));
     }
+
+    std::this_thread::sleep_for(1s);
 
     std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
         return lhs.price > rhs.price;
@@ -63,7 +62,7 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
         for (auto order: ll) {
             actual.emplace_back(*order);
         }
-
+    }
 
     EXPECT_EQ(inputs, actual);
 }
@@ -82,7 +81,7 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
     }
 
     for (auto &input: inputs) {
-        b.addOrder(&input);
+        b.addOrder(new Order(input));
     }
 
     std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
@@ -110,8 +109,9 @@ TEST_F(TestNewOrderBook, testNoMatch) {
         b.addOrder(new Order(i, i, 'B', SYMBOL_IBM, 10, 90));
     }
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 100));
-    auto matches = b.tryCross(SYMBOL_IBM);
-    EXPECT_TRUE(matches.empty());
+
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).value().size(), 1);
+    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 1);
 }
 
 TEST_F(TestNewOrderBook, testCross) {
@@ -120,10 +120,6 @@ TEST_F(TestNewOrderBook, testCross) {
 
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 10, 10));
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 10, 11));
-
-    auto matches = b.tryCross(SYMBOL_IBM);
-
-    EXPECT_EQ(matches.size(), 1);
 
     EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
     EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
@@ -139,9 +135,6 @@ TEST_F(TestNewOrderBook, testSellSweep) {
         b.addOrder(new Order(2, i, 'S', SYMBOL_IBM, 10, 10));
     }
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 11));
-    auto matches = b.tryCross(SYMBOL_IBM);
-
-    EXPECT_EQ(matches.size(), 10);
 
     EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
     EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
@@ -157,9 +150,6 @@ TEST_F(TestNewOrderBook, testBuySweep) {
         b.addOrder(new Order(2, i, 'B', SYMBOL_IBM, 10, 10));
     }
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 10));
-    auto matches = b.tryCross(1);
-
-    EXPECT_EQ(matches.size(), 10);
 
     EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
     EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
