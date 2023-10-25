@@ -4,7 +4,7 @@
 #include "../../OrderBook/include/NewOrderBook.h"
 #include "SymbolResolver.h"
 #include <iostream>
-#include "../../OrderBook/include/OrderEventListner.h"
+#include "../../OrderBook/include/OrderEventListener.h"
 
 struct NewMessageHandler {
     void onIncoming(const Message* msg) {

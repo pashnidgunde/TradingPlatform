@@ -11,7 +11,7 @@
 
 #include "WireFormat.h"
 #include "OutgoingEvents.h"
-#include "OrderEventListner.h"
+#include "OrderEventListener.h"
 #include <iostream>
 
 using namespace std;
@@ -235,5 +235,5 @@ private:
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order *>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
-    OrderEventListner<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>> listner;
+    OrderEventListener<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>> listner;
 };
