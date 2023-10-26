@@ -60,7 +60,13 @@ struct NewMessageHandler {
         }
     }
 
+    NewMessageHandler() : orderBook(listener) {
+    }
+
+    using BookListener = OrderEventListener<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>>;
+    BookListener listener;
     SymbolResolver symbolResolver;
-    OrderBook orderBook;
+    OrderBook<BookListener> orderBook;
 };
+
 

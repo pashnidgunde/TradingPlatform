@@ -25,10 +25,16 @@ struct OrderIdentifierHasher {
 
 using BuyOrdersAtPrice = std::map<Price, std::list<Order *>, std::greater<>>;
 using SellOrdersAtPrice = std::map<Price, std::list<Order *>, std::less<>>;
-using BookListner = OrderEventListener<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>>;
 
+
+template<typename O>
 class OrderBook {
 public:
+
+    OrderBook(O& observer) :
+        _observer(observer) {
+    }
+
     struct TopOfBooksRAII {
         template<typename T>
         [[nodiscard]] const Order* top(const T &orders, SymbolId sid) const {
@@ -56,10 +62,10 @@ public:
             postSellTop = this->top(book.buyOrdersBySymbol, id);
 
             if (preBuyTop != postBuyTop) {
-                book.listener.onEvent(platform::TopOfBook('B', postBuyTop));
+                book._observer.onEvent(platform::TopOfBook('B', postBuyTop));
             }
             if (preSellTop != postSellTop) {
-                book.listener.onEvent(platform::TopOfBook('S', postSellTop));
+                book._observer.onEvent(platform::TopOfBook('S', postSellTop));
             }
         }
 
@@ -83,7 +89,7 @@ public:
     }
 
     void addOrder(Order *order) {
-        listener.onEvent(platform::Ack{order->oi});
+        _observer.onEvent(platform::Ack{order->oi});
         if (order->side == SIDE_BUY) {
             _add(buyOrdersBySymbol, order);
         } else if (order->side == SIDE_SELL) {
@@ -98,7 +104,7 @@ public:
         sellOrdersBySymbol.clear();
         orderIdToNodeMap.clear();
 
-        listener.onEvent(Flush{});
+        _observer.onEvent(Flush{});
     }
 
     template<typename T>
@@ -217,7 +223,7 @@ private:
         };
         removeEmptyPriceLevels(symbol);
 
-        listener.onEvent(trades);
+        _observer.onEvent(trades);
         return trades;
     }
 
@@ -225,5 +231,5 @@ private:
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order *>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
-    OrderEventListener<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>> listener;
+    O& _observer;
 };

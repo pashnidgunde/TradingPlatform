@@ -2,23 +2,27 @@
 #include <random>
 #include "NewOrderBook.h"
 #include <thread>
+#include "TestObserver.h"
 
 using namespace platform;
+
+using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>>;
 
 class TestNewOrderBook : public ::testing::Test {
 protected:
     void SetUp() override {}
-
     void TearDown() override {}
 };
 
 TEST_F(TestNewOrderBook, IsisEmptyInitially) {
-    OrderBook orderBook;
+    Observer observer;
+    OrderBook orderBook(observer);
     EXPECT_TRUE(orderBook.isEmpty());
 }
 
 TEST_F(TestNewOrderBook, testOrderConstructor) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 10));
     EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).has_value());
@@ -35,7 +39,8 @@ TEST_F(TestNewOrderBook, testOrderConstructor) {
 }
 
 TEST_F(TestNewOrderBook, testBuyOrdering) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     std::vector<Order> inputs;
     constexpr int SYMBOL_IBM = 1;
     inputs.reserve(10);
@@ -68,7 +73,8 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
 }
 
 TEST_F(TestNewOrderBook, testSellOrdering) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     std::string symbol{0};
     std::random_device seed;
@@ -103,7 +109,8 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
 }
 
 TEST_F(TestNewOrderBook, testNoMatch) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     for (int i = 0; i < 10; ++i) {
         b.addOrder(new Order(i, i, 'B', SYMBOL_IBM, 10, 90));
@@ -115,7 +122,8 @@ TEST_F(TestNewOrderBook, testNoMatch) {
 }
 
 TEST_F(TestNewOrderBook, testCross) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
 
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 10, 10));
@@ -127,7 +135,8 @@ TEST_F(TestNewOrderBook, testCross) {
 
 
 TEST_F(TestNewOrderBook, testSellSweep) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     std::vector<Order> inputs;
     inputs.reserve(10);
@@ -141,7 +150,8 @@ TEST_F(TestNewOrderBook, testSellSweep) {
 }
 
 TEST_F(TestNewOrderBook, testBuySweep) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     std::string symbol{0};
     std::vector<Order> inputs;
@@ -156,7 +166,8 @@ TEST_F(TestNewOrderBook, testBuySweep) {
 }
 
 TEST_F(TestNewOrderBook, testCancel) {
-    OrderBook b;
+    Observer observer;
+    OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 10));
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 1);
