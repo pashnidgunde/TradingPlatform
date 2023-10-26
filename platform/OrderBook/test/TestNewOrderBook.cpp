@@ -18,6 +18,7 @@ TEST_F(TestNewOrderBook, IsisEmptyInitially) {
     Observer observer;
     OrderBook orderBook(observer);
     EXPECT_TRUE(orderBook.isEmpty());
+    EXPECT_TRUE(observer.orderedEvents().empty());
 }
 
 TEST_F(TestNewOrderBook, testOrderConstructor) {
@@ -36,6 +37,9 @@ TEST_F(TestNewOrderBook, testOrderConstructor) {
     b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 12));
     b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 13));
     EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 3);
+
+    EXPECT_FALSE(observer.orderedEvents().empty());
+
 }
 
 TEST_F(TestNewOrderBook, testBuyOrdering) {

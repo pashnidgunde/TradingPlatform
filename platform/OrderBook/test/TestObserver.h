@@ -30,6 +30,10 @@ public:
         eventQ.pop();
     }
 
+    const std::vector<std::string>& orderedEvents() const { return events; }
+
+private:
+
     std::queue<T> eventQ;
     std::vector<std::string> events;
 };
