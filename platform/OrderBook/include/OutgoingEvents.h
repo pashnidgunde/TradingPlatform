@@ -50,14 +50,23 @@ namespace platform {
 
     struct TopOfBook {
         static constexpr char value = 'B';
-        explicit TopOfBook(const Order* order) : top(order) {}
+        explicit TopOfBook(const char s, const Order* order) : side(s), top(order) {}
 
-        TopOfBook() = default;
-
+        char side;
         const Order* top = nullptr;
 
         friend std::ostream &operator<<(std::ostream &os, const TopOfBook &book) {
-            os << value << ", " << book.top->side << ", " << book.top->price << ", " << book.top->qty;
+            os << value << ", "
+                << book.side << ", ";
+
+            if (book.top) {
+                os << book.top->price << ", "
+                    << book.top->qty;
+            }
+            else {
+                os << '-' << ", "
+                   << '-';
+            }
             return os;
         }
     };

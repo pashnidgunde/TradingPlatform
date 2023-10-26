@@ -25,35 +25,54 @@ struct OrderIdentifierHasher {
 
 using BuyOrdersAtPrice = std::map<Price, std::list<Order *>, std::greater<>>;
 using SellOrdersAtPrice = std::map<Price, std::list<Order *>, std::less<>>;
-
-struct tob {
-    Order *preTop = nullptr;
-    Order *postTop = nullptr;
-
+using BookListner = OrderEventListener<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>>;
+struct TopOfBooksRAII {
     template<typename T>
-    void top(const T &orders, Order *&o) {
-        if (!orders.empty()) {
-            if (!orders.begin()->second.empty()) {
-                if (!orders.begin()->second.begin()->second.empty()) {
-                    o = orders.begin()->second.begin()->second.front();
+    [[nodiscard]] const Order* top(const T &orders, SymbolId sid) const {
+        if (orders.find(sid) != orders.end()) {
+            auto &opl = orders.at(id);
+            if (!opl.empty()) {
+                auto &ll = opl.cbegin()->second;
+                if (!ll.empty()) {
+                    return ll.front();
                 }
             }
         }
+        return nullptr;
     }
 
-    template<typename T>
-    void pre(const T &orders) {
-        this->top(orders, preTop);
+    TopOfBooksRAII(BookListner& listener, const std::unordered_map<SymbolId, BuyOrdersAtPrice>& allBuyOrders,
+                   const std::unordered_map<SymbolId, SellOrdersAtPrice>& allSellOrders,
+                    SymbolId id) :
+        listener(listener),
+        allBuyOrders(allBuyOrders),
+        allSellOrders(allSellOrders),
+        id(id) {
+        preBuyTop = this->top(allBuyOrders,id);
+        preSellTop = this->top(allSellOrders, id);
     }
 
-    template<typename T>
-    void post(const T &orders) {
-        this->top(orders, postTop);
+    ~TopOfBooksRAII() {
+        postBuyTop = this->top(allBuyOrders, id);
+        postSellTop = this->top(allSellOrders, id);
+
+        if (preBuyTop != postBuyTop) {
+            listener.onEvent(platform::TopOfBook('B', postBuyTop));
+        }
+        if (preSellTop != postSellTop) {
+            listener.onEvent(platform::TopOfBook('S', postSellTop));
+        }
     }
 
-    [[nodiscard]] const Order *latest() const {
-        return (preTop != postTop) ? postTop : nullptr;
-    }
+    BookListner& listener;
+    const std::unordered_map<SymbolId, BuyOrdersAtPrice>& allBuyOrders;
+    const std::unordered_map<SymbolId, SellOrdersAtPrice>& allSellOrders;
+    const SymbolId id{};
+
+    const Order *preBuyTop{nullptr};
+    const Order *postBuyTop{nullptr};
+    const Order *preSellTop{nullptr};
+    const Order *postSellTop{nullptr};
 };
 
 
@@ -61,17 +80,13 @@ class OrderBook {
 public:
 
     template<typename T>
-    void _add(T& orders, Order *order) {
-        tob t;
-        t.pre(orders);
-        std::list<Order *>::iterator it = _addOrder(orders, order);
-        orderIdToNodeMap[{order->oi.userId, order->oi.orderId}] = it;
-        try_cross(order->symbol.id);
-        t.post(orders);
-        const Order *tob = t.latest();
-        if (tob) {
-            listner.onEvent(platform::TopOfBook(tob));
-        }
+    void _add(T& existing, Order *incoming) {
+        TopOfBooksRAII t(this->listner, buyOrdersBySymbol, sellOrdersBySymbol, incoming->symbol.id);
+        auto &ordersBySide = existing[incoming->symbol.id];
+        auto &ll = ordersBySide[incoming->price];
+        auto it = ll.insert(ll.end(), incoming);
+        orderIdToNodeMap[{incoming->oi.userId, incoming->oi.orderId}] = it;
+        try_cross(incoming->symbol.id);
     }
 
     void addOrder(Order *order) {
@@ -93,7 +108,6 @@ public:
         listner.onEvent(Flush{});
     }
 
-
     void cancel(const OrderIdentifier &oi) {
         auto it = orderIdToNodeMap.find(oi);
         if (it == orderIdToNodeMap.end()) {
@@ -101,9 +115,8 @@ public:
         }
         auto &iter = it->second;
         auto &order = *iter;
-        tob t;
+
         if (order->side == SIDE_BUY) {
-            t.pre(buyOrdersBySymbol);
             auto &orderMap = buyOrdersBySymbol.at(order->symbol.id);
             auto price = order->price;
             auto &ll = orderMap.at(price);
@@ -111,9 +124,7 @@ public:
             if (ll.empty()) {
                 orderMap.erase(price);
             }
-            t.post(buyOrdersBySymbol);
         } else {
-            t.pre(sellOrdersBySymbol);
             auto &orderMap = sellOrdersBySymbol.at(order->symbol.id);
             auto price = order->price;
             auto &ll = orderMap[price];
@@ -121,11 +132,6 @@ public:
             if (ll.empty()) {
                 orderMap.erase(price);
             }
-            t.post(sellOrdersBySymbol);
-        }
-        const Order *tob = t.latest();
-        if (tob) {
-            listner.onEvent(platform::TopOfBook(tob));
         }
     }
 
@@ -144,16 +150,10 @@ public:
     }
 
 private:
-    template<typename T>
-    std::list<Order *>::iterator _addOrder(T &existing, Order *incoming) {
-        auto &ordersBySide = existing[incoming->symbol.id];
-        auto &ll = ordersBySide[incoming->price];
-        return ll.insert(ll.end(), incoming);
-    }
+
 
     void cross(std::list<Order *> &buys, std::list<Order *> &sells, const Price matchPrice, platform::Trades &trades) {
         auto adjustOpenQty = [](Order *o, int qty) { o->qty -= qty; };
-
         auto completelyFilled = [](const Order *o) { return o->qty == 0; };
 
         auto matchQty = 0;
