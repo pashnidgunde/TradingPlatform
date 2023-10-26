@@ -31,13 +31,13 @@ template<typename O>
 class OrderBook {
 public:
 
-    OrderBook(O& observer) :
-        _observer(observer) {
+    explicit OrderBook(O &observer) :
+            _observer(observer) {
     }
 
     struct TopOfBooksRAII {
         template<typename T>
-        [[nodiscard]] const Order* top(const T &orders, SymbolId sid) const {
+        [[nodiscard]] const Order *top(const T &orders, SymbolId sid) const {
             if (orders.find(sid) != orders.end()) {
                 auto &opl = orders.at(id);
                 if (!opl.empty()) {
@@ -50,10 +50,10 @@ public:
             return nullptr;
         }
 
-        TopOfBooksRAII(OrderBook& orderBook, SymbolId id) :
+        TopOfBooksRAII(OrderBook &orderBook, SymbolId id) :
                 book(orderBook),
                 id(id) {
-            preBuyTop = this->top(book.buyOrdersBySymbol,id);
+            preBuyTop = this->top(book.buyOrdersBySymbol, id);
             preSellTop = this->top(book.sellOrdersBySymbol, id);
         }
 
@@ -69,7 +69,7 @@ public:
             }
         }
 
-        OrderBook& book;
+        OrderBook &book;
         const SymbolId id{};
 
         const Order *preBuyTop{nullptr};
@@ -79,7 +79,7 @@ public:
     };
 
     template<typename T>
-    void _add(T& existing, Order *incoming) {
+    void _add(T &existing, Order *incoming) {
         TopOfBooksRAII t(*this, incoming->symbol.id);
         auto &ordersBySide = existing[incoming->symbol.id];
         auto &ll = ordersBySide[incoming->price];
@@ -89,6 +89,9 @@ public:
     }
 
     void addOrder(Order *order) {
+        if (order->price == 0) {
+            order->price = INT_MAX;
+        }
         _observer.onEvent(platform::Ack{order->oi});
         if (order->side == SIDE_BUY) {
             _add(buyOrdersBySymbol, order);
@@ -108,7 +111,7 @@ public:
     }
 
     template<typename T>
-    void _cancel(T& orders, const std::list<Order *>::iterator iter) {
+    void _cancel(T &orders, const std::list<Order *>::iterator iter) {
         auto order = *iter;
         auto &orderMap = orders.at(order->symbol.id);
         auto price = order->price;
@@ -128,11 +131,11 @@ public:
         if (order->side == SIDE_BUY) {
             _cancel(buyOrdersBySymbol, it->second);
         } else {
-            _cancel(sellOrdersBySymbol,it->second);
+            _cancel(sellOrdersBySymbol, it->second);
         }
     }
 
-    bool isEmpty() const {
+    [[nodiscard]] bool isEmpty() const {
         return buyOrdersBySymbol.empty() && sellOrdersBySymbol.empty();
     }
 
@@ -164,64 +167,77 @@ private:
                 }
             }
         }
+    }
 
-        auto removeCompletelyFilled = [&]() {
-            auto zeroRemainingQty = [](const Order *order) {
-                return order->qty == 0;
-            };
-
-            auto removeZeroQtyOrders = [&](auto &orders) {
-                for (auto it = orders.begin(); it != orders.end();) {
-                    if (zeroRemainingQty(*it)) {
-                        orderIdToNodeMap.erase({(*it)->oi});
-                        it = orders.erase(it);
-                    } else {
-                        break;
-                    }
-                }
-            };
-
-            removeZeroQtyOrders(buys);
-            removeZeroQtyOrders(sells);
-
+    template<typename T>
+    void removeFilledAndMarketOrders(T &ordersByPriceLevel) {
+        auto isFilled = [](const Order *order) {
+            return order->qty == 0;
         };
-        removeCompletelyFilled();
+
+        auto isMarketOrder = [](const Order *order) {
+            return order->price == INT_MAX;
+        };
+
+        auto shouldDelete = [&](const Order *order) {
+            return isFilled(order) || isMarketOrder(order);
+        };
+
+        for (auto it = ordersByPriceLevel.begin(); it != ordersByPriceLevel.end(); ++it) {
+            auto &ll = it->second;
+            for (auto llIter = ll.begin(); llIter != ll.end();) {
+                if (shouldDelete(*llIter)) {
+                    orderIdToNodeMap.erase({(*llIter)->oi});
+                    llIter = ll.erase(llIter);
+                } else {
+                    break;
+                }
+            }
+
+        }
+    }
+
+    template<typename T>
+    void removeEmptyPriceLevel(T &ordersByPriceLevel) {
+        for (auto it = ordersByPriceLevel.cbegin(); it != ordersByPriceLevel.cend();) {
+            if (it->second.empty()) {
+                ordersByPriceLevel.erase(it++);
+            } else {
+                // short circuit as levels are ordered
+                break;
+            }
+        }
     }
 
     platform::Trades try_cross(const SymbolId &symbol) {
+        bool hasBuys = buyOrdersBySymbol.find(symbol) != buyOrdersBySymbol.end();
+        bool hasSells = sellOrdersBySymbol.find(symbol) != sellOrdersBySymbol.end();
+
         platform::Trades trades;
-        if (buyOrdersBySymbol.find(symbol) == buyOrdersBySymbol.end()) return trades;
-        if (sellOrdersBySymbol.find(symbol) == sellOrdersBySymbol.end()) return trades;
+        if (hasBuys && hasSells) {
+            auto canCross = [](const auto &buyPrice, const auto &sellPrice) {
+                return buyPrice >= sellPrice;
+            };
 
-        auto canCross = [](const auto &buyPrice, const auto &sellPrice) {
-            return buyPrice >= sellPrice;
-        };
-
-        for (auto &buysAtPriceLevel: buyOrdersBySymbol.at(symbol)) {
-            for (auto &sellsAtPriceLevel: sellOrdersBySymbol.at(symbol)) {
-                if (!canCross(buysAtPriceLevel.first, sellsAtPriceLevel.first))
-                    break;
-                auto matchPrice = std::min(buysAtPriceLevel.first, sellsAtPriceLevel.first);
-                cross(buysAtPriceLevel.second, sellsAtPriceLevel.second, matchPrice, trades);
+            for (auto &buysAtPriceLevel: buyOrdersBySymbol.at(symbol)) {
+                for (auto &sellsAtPriceLevel: sellOrdersBySymbol.at(symbol)) {
+                    if (!canCross(buysAtPriceLevel.first, sellsAtPriceLevel.first))
+                        break;
+                    auto matchPrice = std::min(buysAtPriceLevel.first, sellsAtPriceLevel.first);
+                    cross(buysAtPriceLevel.second, sellsAtPriceLevel.second, matchPrice, trades);
+                }
             }
         }
 
-        auto removeEmptyPriceLevel = [&](auto &ordersByPriceLevel) {
-            for (auto it = ordersByPriceLevel.cbegin(); it != ordersByPriceLevel.cend();) {
-                if (it->second.empty()) {
-                    ordersByPriceLevel.erase(it++);
-                } else {
-                    // short circuit as levels are ordered
-                    break;
-                }
-            }
-        };
-
-        auto removeEmptyPriceLevels = [&](SymbolId symbol) {
+        if (hasBuys) {
+            removeFilledAndMarketOrders(buyOrdersBySymbol.at(symbol));
             removeEmptyPriceLevel(buyOrdersBySymbol.at(symbol));
+        }
+
+        if (hasSells) {
+            removeFilledAndMarketOrders(sellOrdersBySymbol.at(symbol));
             removeEmptyPriceLevel(sellOrdersBySymbol.at(symbol));
-        };
-        removeEmptyPriceLevels(symbol);
+        }
 
         _observer.onEvent(trades);
         return trades;
@@ -231,5 +247,5 @@ private:
     std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
     std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order *>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
-    O& _observer;
+    O &_observer;
 };

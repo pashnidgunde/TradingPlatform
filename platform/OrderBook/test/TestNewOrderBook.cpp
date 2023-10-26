@@ -11,6 +11,7 @@ using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook, p
 class TestNewOrderBook : public ::testing::Test {
 protected:
     void SetUp() override {}
+
     void TearDown() override {}
 };
 
@@ -45,11 +46,14 @@ TEST_F(TestNewOrderBook, testOrderConstructor) {
 TEST_F(TestNewOrderBook, testBuyOrdering) {
     Observer observer;
     OrderBook b(observer);
+    std::random_device seed;
+    std::mt19937 gen{seed()};                      // seed the generator
+    std::uniform_int_distribution<> dist{1, 100};  // set min and max
     std::vector<Order> inputs;
     constexpr int SYMBOL_IBM = 1;
     inputs.reserve(10);
-    for (int i = 0; i < 10; ++i) {
-        inputs.emplace_back(i, i, 'B', SYMBOL_IBM, 1, /*dist(gen)*/i);
+    for (int i = 1; i < 10; ++i) {
+        inputs.emplace_back(i, i, 'B', SYMBOL_IBM, 1, dist(gen));
     }
 
     for (auto &input: inputs) {
@@ -86,7 +90,7 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
     std::uniform_int_distribution<> dist{1, 100};  // set min and max
     std::vector<Order> inputs;
     inputs.reserve(10);
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 1; i < 10; ++i) {
         inputs.emplace_back(i, i, 'S', SYMBOL_IBM, 1, dist(gen));
     }
 
@@ -179,3 +183,10 @@ TEST_F(TestNewOrderBook, testCancel) {
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 0);
 }
 
+TEST_F(TestNewOrderBook, testMarketOrder) {
+    Observer observer;
+    OrderBook b(observer);
+    constexpr int SYMBOL_IBM = 1;
+    b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 0));
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 0);
+}
