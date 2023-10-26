@@ -108,30 +108,28 @@ public:
         listner.onEvent(Flush{});
     }
 
+    template<typename T>
+    void _cancel(T& orders, const std::list<Order *>::iterator iter) {
+        auto order = *iter;
+        auto &orderMap = orders.at(order->symbol.id);
+        auto price = order->price;
+        auto &ll = orderMap.at(price);
+        ll.erase(iter);
+        if (ll.empty()) {
+            orderMap.erase(price);
+        }
+    }
+
     void cancel(const OrderIdentifier &oi) {
         auto it = orderIdToNodeMap.find(oi);
         if (it == orderIdToNodeMap.end()) {
             return;
         }
-        auto &iter = it->second;
-        auto &order = *iter;
-
+        auto order = *it->second;
         if (order->side == SIDE_BUY) {
-            auto &orderMap = buyOrdersBySymbol.at(order->symbol.id);
-            auto price = order->price;
-            auto &ll = orderMap.at(price);
-            ll.erase(iter);
-            if (ll.empty()) {
-                orderMap.erase(price);
-            }
+            _cancel(buyOrdersBySymbol, it->second);
         } else {
-            auto &orderMap = sellOrdersBySymbol.at(order->symbol.id);
-            auto price = order->price;
-            auto &ll = orderMap[price];
-            ll.erase(iter);
-            if (ll.empty()) {
-                orderMap.erase(price);
-            }
+            _cancel(sellOrdersBySymbol,it->second);
         }
     }
 
