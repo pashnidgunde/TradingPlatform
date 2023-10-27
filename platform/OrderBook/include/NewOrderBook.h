@@ -38,13 +38,11 @@ public:
     struct TopOfBooksRAII {
         template<typename T>
         [[nodiscard]] const Order *top(const T &orders, SymbolId sid) const {
-            if (orders.find(sid) != orders.end()) {
-                auto &opl = orders.at(id);
-                if (!opl.empty()) {
-                    auto &ll = opl.cbegin()->second;
-                    if (!ll.empty()) {
-                        return ll.front();
-                    }
+            auto &opl = orders[id];
+            if (!opl.empty()) {
+                auto &ll = opl.cbegin()->second;
+                if (!ll.empty()) {
+                    return ll.front();
                 }
             }
             return nullptr;
@@ -103,10 +101,13 @@ public:
     }
 
     void flush() {
-        buyOrdersBySymbol.clear();
-        sellOrdersBySymbol.clear();
+        for (auto &buyOrderBySymbol: buyOrdersBySymbol) {
+            buyOrderBySymbol.clear();
+        }
+        for (auto &sellOrderBySymbol: sellOrdersBySymbol) {
+            sellOrderBySymbol.clear();
+        }
         orderIdToNodeMap.clear();
-
         _observer.onEvent(Flush{});
     }
 
@@ -135,18 +136,12 @@ public:
         }
     }
 
-    [[nodiscard]] bool isEmpty() const {
-        return buyOrdersBySymbol.empty() && sellOrdersBySymbol.empty();
+    auto &buyOrders(SymbolId id) {
+        return buyOrdersBySymbol[id];
     }
 
-    std::optional<BuyOrdersAtPrice> buyOrders(SymbolId id) {
-        return (buyOrdersBySymbol.find(id) == buyOrdersBySymbol.end()) ?
-               std::nullopt : std::make_optional<BuyOrdersAtPrice>(buyOrdersBySymbol.at(id));
-    }
-
-    std::optional<SellOrdersAtPrice> sellOrders(SymbolId id) {
-        return (sellOrdersBySymbol.find(id) == sellOrdersBySymbol.end()) ?
-               std::nullopt : std::make_optional<SellOrdersAtPrice>(sellOrdersBySymbol.at(id));
+    auto &sellOrders(SymbolId id) {
+        return sellOrdersBySymbol[id];
     }
 
 private:
@@ -210,8 +205,8 @@ private:
     }
 
     platform::Trades try_cross(const SymbolId &symbol) {
-        bool hasBuys = buyOrdersBySymbol.find(symbol) != buyOrdersBySymbol.end();
-        bool hasSells = sellOrdersBySymbol.find(symbol) != sellOrdersBySymbol.end();
+        bool hasBuys = !buyOrdersBySymbol[symbol].empty();
+        bool hasSells = !sellOrdersBySymbol[symbol].empty();
 
         platform::Trades trades;
         if (hasBuys && hasSells) {
@@ -219,8 +214,8 @@ private:
                 return buyPrice >= sellPrice;
             };
 
-            for (auto &buysAtPriceLevel: buyOrdersBySymbol.at(symbol)) {
-                for (auto &sellsAtPriceLevel: sellOrdersBySymbol.at(symbol)) {
+            for (auto &buysAtPriceLevel: buyOrdersBySymbol[symbol]) {
+                for (auto &sellsAtPriceLevel: sellOrdersBySymbol[symbol]) {
                     if (!canCross(buysAtPriceLevel.first, sellsAtPriceLevel.first))
                         break;
                     auto matchPrice = std::min(buysAtPriceLevel.first, sellsAtPriceLevel.first);
@@ -230,13 +225,13 @@ private:
         }
 
         if (hasBuys) {
-            removeFilledAndMarketOrders(buyOrdersBySymbol.at(symbol));
-            removeEmptyPriceLevel(buyOrdersBySymbol.at(symbol));
+            removeFilledAndMarketOrders(buyOrdersBySymbol[symbol]);
+            removeEmptyPriceLevel(buyOrdersBySymbol[symbol]);
         }
 
         if (hasSells) {
-            removeFilledAndMarketOrders(sellOrdersBySymbol.at(symbol));
-            removeEmptyPriceLevel(sellOrdersBySymbol.at(symbol));
+            removeFilledAndMarketOrders(sellOrdersBySymbol[symbol]);
+            removeEmptyPriceLevel(sellOrdersBySymbol[symbol]);
         }
 
         _observer.onEvent(trades);
@@ -244,8 +239,8 @@ private:
     }
 
 
-    std::unordered_map<SymbolId, BuyOrdersAtPrice> buyOrdersBySymbol;
-    std::unordered_map<SymbolId, SellOrdersAtPrice> sellOrdersBySymbol;
+    std::array<BuyOrdersAtPrice, 1024> buyOrdersBySymbol;
+    std::array<SellOrdersAtPrice, 1024> sellOrdersBySymbol;
     std::unordered_map<OrderIdentifier, std::list<Order *>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
     O &_observer;
 };

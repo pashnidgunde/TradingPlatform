@@ -15,10 +15,9 @@ protected:
     void TearDown() override {}
 };
 
-TEST_F(TestNewOrderBook, IsisEmptyInitially) {
+TEST_F(TestNewOrderBook, IsEmptyInitially) {
     Observer observer;
     OrderBook orderBook(observer);
-    EXPECT_TRUE(orderBook.isEmpty());
     EXPECT_TRUE(observer.orderedEvents().empty());
 }
 
@@ -27,17 +26,17 @@ TEST_F(TestNewOrderBook, testOrderConstructor) {
     OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 10));
-    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).has_value());
-    EXPECT_FALSE(b.sellOrders(SYMBOL_IBM).has_value());
+    EXPECT_FALSE(b.buyOrders(SYMBOL_IBM).empty());
+    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).empty());
     b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 11));
-    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).has_value());
+    EXPECT_FALSE(b.sellOrders(SYMBOL_IBM).empty());
 
-    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).value().size(), 1);
-    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 1);
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 1);
+    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).size(), 1);
 
     b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 12));
     b.addOrder(new Order(1, 1, 'S', SYMBOL_IBM, 100, 13));
-    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 3);
+    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).size(), 3);
 
     EXPECT_FALSE(observer.orderedEvents().empty());
 
@@ -68,9 +67,9 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
 
     std::vector<Order> actual;
     const auto &buys = b.buyOrders(SYMBOL_IBM);
-    EXPECT_TRUE(buys.has_value());
+    EXPECT_FALSE(buys.empty());
     actual.reserve(10);
-    for (const auto &buy: buys.value()) {
+    for (const auto &buy: buys) {
         const auto &ll = buy.second;
         for (auto order: ll) {
             actual.emplace_back(*order);
@@ -104,9 +103,9 @@ TEST_F(TestNewOrderBook, testSellOrdering) {
 
     std::vector<Order> actual;
     const auto &sells = b.sellOrders(SYMBOL_IBM);
-    EXPECT_TRUE(sells.has_value());
+    EXPECT_FALSE(sells.empty());
     actual.reserve(10);
-    for (const auto &sell: sells.value()) {
+    for (const auto &sell: sells) {
         const auto &ll = sell.second;
         for (auto &order: ll) {
             actual.emplace_back(*order);
@@ -125,8 +124,8 @@ TEST_F(TestNewOrderBook, testNoMatch) {
     }
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 100));
 
-    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).value().size(), 1);
-    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).value().size(), 1);
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 1);
+    EXPECT_EQ(b.sellOrders(SYMBOL_IBM).size(), 1);
 }
 
 TEST_F(TestNewOrderBook, testCross) {
@@ -137,8 +136,8 @@ TEST_F(TestNewOrderBook, testCross) {
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 10, 10));
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 10, 11));
 
-    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
-    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
+    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).empty());
+    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).empty());
 }
 
 
@@ -153,8 +152,8 @@ TEST_F(TestNewOrderBook, testSellSweep) {
     }
     b.addOrder(new Order(1, 1, 'B', SYMBOL_IBM, 100, 11));
 
-    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
-    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
+    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).empty());
+    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).empty());
 }
 
 TEST_F(TestNewOrderBook, testBuySweep) {
@@ -169,8 +168,8 @@ TEST_F(TestNewOrderBook, testBuySweep) {
     }
     b.addOrder(new Order(2, 1, 'S', SYMBOL_IBM, 100, 10));
 
-    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM)->empty());
-    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM)->empty());
+    EXPECT_TRUE(b.sellOrders(SYMBOL_IBM).empty());
+    EXPECT_TRUE(b.buyOrders(SYMBOL_IBM).empty());
 }
 
 TEST_F(TestNewOrderBook, testCancel) {
@@ -178,9 +177,9 @@ TEST_F(TestNewOrderBook, testCancel) {
     OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 10));
-    EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 1);
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 1);
     b.cancel({2, 1});
-    EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 0);
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 0);
 }
 
 TEST_F(TestNewOrderBook, testMarketOrder) {
@@ -188,5 +187,5 @@ TEST_F(TestNewOrderBook, testMarketOrder) {
     OrderBook b(observer);
     constexpr int SYMBOL_IBM = 1;
     b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 0));
-    EXPECT_EQ(b.buyOrders(SYMBOL_IBM)->size(), 0);
+    EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 0);
 }
