@@ -59,8 +59,6 @@ TEST_F(TestNewOrderBook, testBuyOrdering) {
         b.addOrder(new Order(input));
     }
 
-    std::this_thread::sleep_for(1s);
-
     std::sort(inputs.begin(), inputs.end(), [](const auto &lhs, const auto &rhs) {
         return lhs.price > rhs.price;
     });

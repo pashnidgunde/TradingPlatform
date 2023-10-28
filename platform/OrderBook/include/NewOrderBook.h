@@ -15,14 +15,6 @@
 #include "OrderEventListener.h"
 #include <iostream>
 
-using namespace std;
-
-
-
-
-template<typename O>
-struct OrderBook;
-
 template<typename T>
 struct OrderStoreBase  {
     struct OrderIdentifierHasher {
@@ -109,8 +101,6 @@ struct OrderStoreBase  {
         }
     }
 
-
-
     std::unordered_map<OrderIdentifier, std::list<Order *>::iterator, OrderIdentifierHasher> orderIdToNodeMap;
 };
 
@@ -119,24 +109,22 @@ struct OrderStore;
 
 template<>
 struct OrderStore<SIDE_BUY> : public OrderStoreBase<OrderStore<SIDE_BUY>>{
-    using BuyOrdersAtPrice = std::map<Price, std::list<Order *>, std::greater<>>;
-    std::array<BuyOrdersAtPrice, 1024> orders;
+    using PriceLevels = std::map<Price, std::list<Order *>, std::greater<>>;
+    std::array<PriceLevels, 1024> orders;
 };
 
 template<>
 struct OrderStore<SIDE_SELL> : public OrderStoreBase<OrderStore<SIDE_SELL>>{
-    using SellOrdersAtPrice = std::map<Price, std::list<Order *>, std::less<>>;
-    std::array<SellOrdersAtPrice , 1024> orders;
+    using PriceLevels = std::map<Price, std::list<Order *>, std::less<>>;
+    std::array<PriceLevels , 1024> orders;
 };
 
-template<typename O, char S>
+template<typename O, typename T>
 struct TTopOfBooksRAII {
-    static constexpr char side = S;
 
-    template<typename T>
-    [[nodiscard]] const Order *top(const T &opl) const {
-        if (!opl.empty()) {
-            auto &ll = opl.cbegin()->second;
+    [[nodiscard]] const Order *topNow() const {
+        if (!priceLevels.empty()) {
+            auto &ll = priceLevels.cbegin()->second;
             if (!ll.empty()) {
                 return ll.front();
             }
@@ -145,44 +133,40 @@ struct TTopOfBooksRAII {
     }
 
     bool changed() {
-        return preTop != postTop;
+        return topBefore != topAfter;
     }
 
-    const Order* getTop() const {
-        if constexpr (S == SIDE_BUY) {
-            return top(book.buyOrders(symbol));
-        }
-        return top(book.sellOrders(symbol));
-    }
-
-    TTopOfBooksRAII(OrderBook<O>& book, SymbolId symbol) :
-        book(book),
-        symbol(symbol) {
-            preTop = getTop();
+    TTopOfBooksRAII(O& observer, const T& priceLevels) :
+        observer(observer),
+        priceLevels(priceLevels) {
+        topBefore = topNow();
     }
 
     ~TTopOfBooksRAII() {
-        postTop = getTop();
+        topAfter = topNow();
         if(changed()) {
-            book.observer().onEvent(platform::TopOfBook<S>(postTop));
+            if constexpr(std::is_same<T,OrderStore<SIDE_BUY>>::value)
+                observer.onEvent(platform::TopOfBook<SIDE_BUY>(topAfter));
+            else
+                observer.onEvent(platform::TopOfBook<SIDE_SELL>(topAfter));
         }
     }
 
-    OrderBook<O> &book;
-    const SymbolId symbol{};
-    const Order *preTop{nullptr};
-    const Order *postTop{nullptr};
+    O &observer;
+    const T& priceLevels;
+    const Order *topBefore{nullptr};
+    const Order *topAfter{nullptr};
 };
 
 template<typename O>
 struct TopOfBooksRAII {
-    TopOfBooksRAII(OrderBook<O> &orderBook, SymbolId symbol) :
-            bt(orderBook,symbol),
-            st(orderBook,symbol) {
+    TopOfBooksRAII(O &observer, OrderStore<SIDE_BUY>::PriceLevels& buyLevels, OrderStore<SIDE_SELL>::PriceLevels sellLevels) :
+            bt(observer,buyLevels),
+            st(observer,sellLevels) {
     }
 
-    TTopOfBooksRAII<O,SIDE_BUY> bt;
-    TTopOfBooksRAII<O,SIDE_SELL> st;
+    TTopOfBooksRAII<O, OrderStore<SIDE_BUY>::PriceLevels> bt;
+    TTopOfBooksRAII<O, OrderStore<SIDE_SELL>::PriceLevels> st;
 };
 
 
@@ -196,7 +180,7 @@ public:
 
     void addOrder(Order *order) {
         _observer.onEvent(platform::Ack{order->oi});
-        TopOfBooksRAII<O> t(*this, order->symbol.id);
+        TopOfBooksRAII<O> t(_observer, buyStore.get(order->symbol.id), sellStore.get(order->symbol.id));
 
         if (order->side == SIDE_BUY) {
             buyStore.insert(order);
@@ -228,9 +212,6 @@ public:
     auto &sellOrders(SymbolId symbol) {
         return sellStore.get(symbol);
     }
-
-    OrderStore<SIDE_BUY> buyStore;
-    OrderStore<SIDE_SELL> sellStore;
 
     auto& observer() const { return _observer; }
 
@@ -281,5 +262,7 @@ private:
         return trades;
     }
 
+    OrderStore<SIDE_BUY> buyStore;
+    OrderStore<SIDE_SELL> sellStore;
     O &_observer;
 };
