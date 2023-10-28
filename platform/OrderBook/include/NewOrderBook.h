@@ -27,12 +27,39 @@ struct OrderIdentifierHasher {
 using BuyOrdersAtPrice = std::map<Price, std::list<Order *>, std::greater<>>;
 using SellOrdersAtPrice = std::map<Price, std::list<Order *>, std::less<>>;
 
-template<char S>
-struct TTopOfBooksRAII;
+template<typename O>
+struct OrderBook;
 
-template<>
-struct TTopOfBooksRAII<SIDE_BUY> {
+template<typename O, char S>
+struct TTopOfBooksRAII {
+    static constexpr char side = S;
 
+    template<typename T>
+    [[nodiscard]] const Order *top(const T &orders) const {
+        auto &opl = orders[id];
+        if (!opl.empty()) {
+            auto &ll = opl.cbegin()->second;
+            if (!ll.empty()) {
+                return ll.front();
+            }
+        }
+        return nullptr;
+    }
+
+    bool changed() {
+        return preTop != postTop;
+    }
+
+    ~TTopOfBooksRAII() {
+        if(changed()) {
+            book.observer().onEvent(platform::TopOfBook<S>(postTop));
+        }
+    }
+
+    OrderBook<O> &book;
+    const SymbolId id{};
+    const Order *preTop{nullptr};
+    const Order *postTop{nullptr};
 };
 
 template<typename O>
@@ -44,44 +71,14 @@ public:
     }
 
     struct TopOfBooksRAII {
-        template<typename T>
-        [[nodiscard]] const Order *top(const T &orders) const {
-            auto &opl = orders[id];
-            if (!opl.empty()) {
-                auto &ll = opl.cbegin()->second;
-                if (!ll.empty()) {
-                    return ll.front();
-                }
-            }
-            return nullptr;
-        }
 
         TopOfBooksRAII(OrderBook &orderBook, SymbolId id) :
-                book(orderBook),
-                id(id) {
-            preBuyTop = this->top(book.buyOrdersBySymbol);
-            preSellTop = this->top(book.sellOrdersBySymbol);
+            bt{orderBook,id},
+            st{orderBook,id} {
         }
 
-        ~TopOfBooksRAII() {
-            postBuyTop = this->top(book.buyOrdersBySymbol);
-            postSellTop = this->top(book.buyOrdersBySymbol);
-
-            if (preBuyTop != postBuyTop) {
-                book._observer.onEvent(platform::TopOfBook('B', postBuyTop));
-            }
-            if (preSellTop != postSellTop) {
-                book._observer.onEvent(platform::TopOfBook('S', postSellTop));
-            }
-        }
-
-        OrderBook &book;
-        const SymbolId id{};
-
-        const Order *preBuyTop{nullptr};
-        const Order *postBuyTop{nullptr};
-        const Order *preSellTop{nullptr};
-        const Order *postSellTop{nullptr};
+        TTopOfBooksRAII<O,SIDE_BUY> bt;
+        TTopOfBooksRAII<O,SIDE_SELL> st;
     };
 
     template<typename T>
@@ -151,6 +148,8 @@ public:
     auto &sellOrders(SymbolId id) {
         return sellOrdersBySymbol[id];
     }
+
+    auto& observer() const { return _observer; }
 
 private:
 

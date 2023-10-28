@@ -48,24 +48,22 @@ namespace platform {
 
     using Trades = std::list<platform::Trade>;
 
+    template<char S=SIDE_BUY>
     struct TopOfBook {
         static constexpr char value = 'B';
-        explicit TopOfBook(const char s, const Order* order) : side(s), top(order) {}
+        static constexpr char side = S;
+        explicit TopOfBook(const Order* order) : top(order) {}
 
-        char side;
         const Order* top = nullptr;
 
         friend std::ostream &operator<<(std::ostream &os, const TopOfBook &book) {
-            os << value << ", "
-                << book.side << ", ";
+            os << value << ", " << side << ", ";
 
             if (book.top) {
-                os << book.top->price << ", "
-                    << book.top->qty;
+                os << book.top->price << ", " << book.top->qty;
             }
             else {
-                os << '-' << ", "
-                   << '-';
+                os << '-' << ", " << '-';
             }
             return os;
         }

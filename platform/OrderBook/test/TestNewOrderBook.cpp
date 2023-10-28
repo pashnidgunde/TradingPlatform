@@ -6,7 +6,7 @@
 
 using namespace platform;
 
-using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook, platform::Trades, Flush>>;
+using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook<SIDE_BUY>,platform::TopOfBook<SIDE_SELL>, platform::Trades, Flush>>;
 
 class TestNewOrderBook : public ::testing::Test {
 protected:
