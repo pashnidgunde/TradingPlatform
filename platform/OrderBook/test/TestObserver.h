@@ -20,11 +20,13 @@ public:
             if constexpr (std::is_same_v<EventType, std::list<platform::Trade>>) {
                 for (const auto &e: event) {
                     s << e;
+                    events.emplace_back(s.str());
                 }
             } else {
                 s << event;
+                events.emplace_back(s.str());
             }
-            events.emplace_back(s.str());
+
         };
         std::visit(visitor, eventQ.front());
         eventQ.pop();

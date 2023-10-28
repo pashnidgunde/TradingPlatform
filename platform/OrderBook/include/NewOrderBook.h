@@ -32,6 +32,7 @@ struct OrderStoreBase  {
         }
         orderIdToNodeMap.clear();
     }
+
     auto insert(Order* order) {
         if (order->price == 0) {
             order->price = INT_MAX;
@@ -123,8 +124,8 @@ template<typename O, typename T>
 struct TTopOfBooksRAII {
 
     [[nodiscard]] const Order *topNow() const {
-        if (!priceLevels.empty()) {
-            auto &ll = priceLevels.cbegin()->second;
+        if (!_priceLevels.empty()) {
+            auto &ll = _priceLevels.cbegin()->second;
             if (!ll.empty()) {
                 return ll.front();
             }
@@ -133,61 +134,60 @@ struct TTopOfBooksRAII {
     }
 
     bool changed() {
-        return topBefore != topAfter;
+        return _topBefore != _topAfter;
     }
 
     TTopOfBooksRAII(O& observer, const T& priceLevels) :
-        observer(observer),
-        priceLevels(priceLevels) {
-        topBefore = topNow();
+            _observer(observer),
+            _priceLevels(priceLevels) {
+        _topBefore = topNow();
     }
 
     ~TTopOfBooksRAII() {
-        topAfter = topNow();
+        _topAfter = topNow();
         if(changed()) {
-            if constexpr(std::is_same<T,OrderStore<SIDE_BUY>>::value) {
-                observer.onEvent(platform::TopOfBook<SIDE_BUY>(topAfter));
+            if constexpr(std::is_same<T,OrderStore<SIDE_BUY>::PriceLevels>::value) {
+                _observer.onEvent(platform::TopOfBook<SIDE_BUY>(_topAfter));
             }
             else {
-                observer.onEvent(platform::TopOfBook<SIDE_SELL>(topAfter));
+                _observer.onEvent(platform::TopOfBook<SIDE_SELL>(_topAfter));
             }
         }
     }
 
-    O &observer;
-    const T& priceLevels;
-    const Order *topBefore{nullptr};
-    const Order *topAfter{nullptr};
+    O &_observer;
+    const T& _priceLevels;
+    const Order *_topBefore{nullptr};
+    const Order *_topAfter{nullptr};
 };
 
 template<typename O>
 struct TopOfBooksRAII {
-    TopOfBooksRAII(O &observer, OrderStore<SIDE_BUY>::PriceLevels& buyLevels, OrderStore<SIDE_SELL>::PriceLevels sellLevels) :
-            bt(observer,buyLevels),
-            st(observer,sellLevels) {
+    TopOfBooksRAII(O &observer, OrderStore<SIDE_BUY>::PriceLevels& buyLevels, OrderStore<SIDE_SELL>::PriceLevels& sellLevels) :
+            _bt(observer, buyLevels),
+            _st(observer, sellLevels) {
     }
 
-    TTopOfBooksRAII<O, OrderStore<SIDE_BUY>::PriceLevels> bt;
-    TTopOfBooksRAII<O, OrderStore<SIDE_SELL>::PriceLevels> st;
+    TTopOfBooksRAII<O, OrderStore<SIDE_BUY>::PriceLevels> _bt;
+    TTopOfBooksRAII<O, OrderStore<SIDE_SELL>::PriceLevels> _st;
 };
 
 
 template<typename O>
 class OrderBook {
 public:
-
     explicit OrderBook(O &observer) :
         _observer(observer) {
     }
 
     void addOrder(Order *order) {
         _observer.onEvent(platform::Ack{order->oi});
-        TopOfBooksRAII<O> t(_observer, buyStore.get(order->symbol.id), sellStore.get(order->symbol.id));
+        TopOfBooksRAII<O> t(_observer, _buyStore.get(order->symbol.id), _sellStore.get(order->symbol.id));
 
         if (order->side == SIDE_BUY) {
-            buyStore.insert(order);
+            _buyStore.insert(order);
         } else if (order->side == SIDE_SELL) {
-            sellStore.insert(order);
+            _sellStore.insert(order);
         } else {
             throw std::runtime_error("Unsupported side");
         }
@@ -196,23 +196,22 @@ public:
     }
 
     void flush() {
-        buyStore.flush();
-        sellStore.flush();
-        _observer.onEvent(Flush{});
+        _buyStore.flush();
+        _sellStore.flush();
     }
 
     void cancel(const OrderIdentifier &oi) {
-        if (!buyStore.remove(oi)) {
-            sellStore.remove(oi);
+        if (!_buyStore.remove(oi)) {
+            _sellStore.remove(oi);
         }
     }
 
     auto &buyOrders(SymbolId symbol) {
-        return buyStore.get(symbol);
+        return _buyStore.get(symbol);
     }
 
     auto &sellOrders(SymbolId symbol) {
-        return sellStore.get(symbol);
+        return _sellStore.get(symbol);
     }
 
 private:
@@ -236,8 +235,8 @@ private:
     }
 
     platform::Trades try_cross(const SymbolId &symbol) {
-        bool hasBuys = !buyStore.get(symbol).empty();
-        bool hasSells = !sellStore.get(symbol).empty();
+        bool hasBuys = !_buyStore.get(symbol).empty();
+        bool hasSells = !_sellStore.get(symbol).empty();
 
         platform::Trades trades;
         if (hasBuys && hasSells) {
@@ -245,8 +244,8 @@ private:
                 return buyPrice >= sellPrice;
             };
 
-            for (auto &buysAtPriceLevel: buyStore.get(symbol)) {
-                for (auto &sellsAtPriceLevel: sellStore.get(symbol)) {
+            for (auto &buysAtPriceLevel: _buyStore.get(symbol)) {
+                for (auto &sellsAtPriceLevel: _sellStore.get(symbol)) {
                     if (!canCross(buysAtPriceLevel.first, sellsAtPriceLevel.first))
                         break;
                     auto matchPrice = std::min(buysAtPriceLevel.first, sellsAtPriceLevel.first);
@@ -255,14 +254,14 @@ private:
             }
         }
 
-        buyStore.reBalance(symbol);
-        sellStore.reBalance(symbol);
+        _buyStore.reBalance(symbol);
+        _sellStore.reBalance(symbol);
 
         _observer.onEvent(trades);
         return trades;
     }
 
-    OrderStore<SIDE_BUY> buyStore;
-    OrderStore<SIDE_SELL> sellStore;
-    O &_observer;
+    OrderStore<SIDE_BUY> _buyStore;
+    OrderStore<SIDE_SELL> _sellStore;
+    O & _observer;
 };

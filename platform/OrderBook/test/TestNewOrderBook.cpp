@@ -6,7 +6,7 @@
 
 using namespace platform;
 
-using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook<SIDE_BUY>,platform::TopOfBook<SIDE_SELL>, platform::Trades, Flush>>;
+using Observer = TestObserver<std::variant<platform::Ack, platform::TopOfBook<SIDE_BUY>,platform::TopOfBook<SIDE_SELL>, platform::Trades>>;
 
 class TestNewOrderBook : public ::testing::Test {
 protected:
@@ -187,3 +187,41 @@ TEST_F(TestNewOrderBook, testMarketOrder) {
     b.addOrder(new Order(2, 1, 'B', SYMBOL_IBM, 10, 0));
     EXPECT_EQ(b.buyOrders(SYMBOL_IBM).size(), 0);
 }
+
+TEST_F(TestNewOrderBook, testSell) {
+    Observer observer;
+    OrderBook<Observer> orderBook(observer);
+    orderBook.addOrder(new Order(2,102,SIDE_SELL,1,100,11));
+    auto& events = observer.orderedEvents();
+    EXPECT_EQ(events.size(), 2);
+}
+
+TEST_F(TestNewOrderBook, testScenario3) {
+
+    Observer observer;
+    OrderBook<Observer> orderBook(observer);
+    orderBook.addOrder(new Order(1,1,SIDE_BUY,1,100,10));
+    orderBook.addOrder(new Order(2,101,SIDE_BUY,1,100,9));
+    orderBook.addOrder(new Order(2,102,SIDE_SELL,1,100,11));
+    orderBook.addOrder(new Order(1,2,SIDE_BUY,1,100,11));
+    orderBook.addOrder(new Order(2,103,SIDE_SELL,1,100,11));
+    orderBook.flush();
+
+    std::vector<std::string> expected{
+            "A, 1, 1",
+            "B, B, 10, 100",
+            "A, 2, 101",
+            "A, 2, 102",
+            "B, S, 11, 100",
+            "A, 1, 2",
+            "T, 1, 2, 2, 102, 11, 100",
+            "B, S, -, -",
+            "A, 2, 103",
+            "B, S, 11, 100"
+    };
+
+    auto& events = observer.orderedEvents();
+    EXPECT_EQ(events.size(), expected.size());
+    EXPECT_EQ(events,expected);
+}
+

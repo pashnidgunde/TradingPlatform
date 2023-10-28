@@ -28,7 +28,7 @@ namespace client {
 
     private:
         const std::string IPADDRESS = "127.0.0.1";
-        const long UDP_PORT = 13251;
+        const long UDP_PORT = 1234;
         boost::asio::io_service io_service_;
         udp::socket socket_;
         udp::endpoint endpoint_ = udp::endpoint(address::from_string(IPADDRESS), UDP_PORT);
