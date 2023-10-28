@@ -79,6 +79,17 @@ struct TTopOfBooksRAII {
 };
 
 template<typename O>
+struct TopOfBooksRAII {
+    TopOfBooksRAII(OrderBook<O> &orderBook, SymbolId id) :
+            bt(orderBook,id),
+            st(orderBook,id) {
+    }
+
+    TTopOfBooksRAII<O,SIDE_BUY> bt;
+    TTopOfBooksRAII<O,SIDE_SELL> st;
+};
+
+template<typename O>
 class OrderBook {
 public:
 
@@ -86,20 +97,9 @@ public:
             _observer(observer) {
     }
 
-    struct TopOfBooksRAII {
-
-        TopOfBooksRAII(OrderBook &orderBook, SymbolId id) :
-            bt(orderBook,id),
-            st(orderBook,id) {
-        }
-
-        TTopOfBooksRAII<O,SIDE_BUY> bt;
-        TTopOfBooksRAII<O,SIDE_SELL> st;
-    };
-
     template<typename T>
     void _add(T &existing, Order *incoming) {
-        TopOfBooksRAII t(*this, incoming->symbol.id);
+        TopOfBooksRAII<O> t(*this, incoming->symbol.id);
         auto &ordersBySide = existing[incoming->symbol.id];
         auto &ll = ordersBySide[incoming->price];
         auto it = ll.insert(ll.end(), incoming);
