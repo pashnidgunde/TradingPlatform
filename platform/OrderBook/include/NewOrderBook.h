@@ -49,24 +49,21 @@ struct TTopOfBooksRAII {
         return preTop != postTop;
     }
 
+    const Order* getTop() const {
+        if constexpr (side == SIDE_BUY) {
+            return top(book.buyOrders(id));
+        }
+        return top(book.sellOrders(id));
+    }
+
     TTopOfBooksRAII(OrderBook<O>& book, SymbolId id) :
         book(book),
         id(id) {
-        if constexpr (side == SIDE_BUY) {
-            preTop = top(book.buyOrders(id));
-        }
-        else {
-            preTop = top(book.sellOrders(id));
-        }
+            preTop = getTop();
     }
 
     ~TTopOfBooksRAII() {
-        if constexpr (side == SIDE_BUY) {
-            postTop = top(book.buyOrders(id));
-        }
-        else {
-            postTop = top(book.sellOrders(id));
-        }
+        postTop = getTop();
         if(changed()) {
             book.observer().onEvent(platform::TopOfBook<S>(postTop));
         }
