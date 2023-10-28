@@ -35,8 +35,7 @@ struct TTopOfBooksRAII {
     static constexpr char side = S;
 
     template<typename T>
-    [[nodiscard]] const Order *top(const T &orders) const {
-        auto &opl = orders[id];
+    [[nodiscard]] const Order *top(const T &opl) const {
         if (!opl.empty()) {
             auto &ll = opl.cbegin()->second;
             if (!ll.empty()) {
@@ -50,7 +49,24 @@ struct TTopOfBooksRAII {
         return preTop != postTop;
     }
 
+    TTopOfBooksRAII(OrderBook<O>& book, SymbolId id) :
+        book(book),
+        id(id) {
+        if constexpr (side == SIDE_BUY) {
+            preTop = top(book.buyOrders(id));
+        }
+        else {
+            preTop = top(book.sellOrders(id));
+        }
+    }
+
     ~TTopOfBooksRAII() {
+        if constexpr (side == SIDE_BUY) {
+            postTop = top(book.buyOrders(id));
+        }
+        else {
+            postTop = top(book.sellOrders(id));
+        }
         if(changed()) {
             book.observer().onEvent(platform::TopOfBook<S>(postTop));
         }
@@ -73,8 +89,8 @@ public:
     struct TopOfBooksRAII {
 
         TopOfBooksRAII(OrderBook &orderBook, SymbolId id) :
-            bt{orderBook,id},
-            st{orderBook,id} {
+            bt(orderBook,id),
+            st(orderBook,id) {
         }
 
         TTopOfBooksRAII<O,SIDE_BUY> bt;
