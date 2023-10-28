@@ -145,10 +145,12 @@ struct TTopOfBooksRAII {
     ~TTopOfBooksRAII() {
         topAfter = topNow();
         if(changed()) {
-            if constexpr(std::is_same<T,OrderStore<SIDE_BUY>>::value)
+            if constexpr(std::is_same<T,OrderStore<SIDE_BUY>>::value) {
                 observer.onEvent(platform::TopOfBook<SIDE_BUY>(topAfter));
-            else
+            }
+            else {
                 observer.onEvent(platform::TopOfBook<SIDE_SELL>(topAfter));
+            }
         }
     }
 
@@ -212,8 +214,6 @@ public:
     auto &sellOrders(SymbolId symbol) {
         return sellStore.get(symbol);
     }
-
-    auto& observer() const { return _observer; }
 
 private:
 
