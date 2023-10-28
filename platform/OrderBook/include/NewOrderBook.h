@@ -8,6 +8,7 @@
 #include <list>
 #include <functional>
 #include <variant>
+#include <climits>
 
 #include "WireFormat.h"
 #include "OutgoingEvents.h"
@@ -26,6 +27,13 @@ struct OrderIdentifierHasher {
 using BuyOrdersAtPrice = std::map<Price, std::list<Order *>, std::greater<>>;
 using SellOrdersAtPrice = std::map<Price, std::list<Order *>, std::less<>>;
 
+template<char S>
+struct TTopOfBooksRAII;
+
+template<>
+struct TTopOfBooksRAII<SIDE_BUY> {
+
+};
 
 template<typename O>
 class OrderBook {
@@ -37,7 +45,7 @@ public:
 
     struct TopOfBooksRAII {
         template<typename T>
-        [[nodiscard]] const Order *top(const T &orders, SymbolId sid) const {
+        [[nodiscard]] const Order *top(const T &orders) const {
             auto &opl = orders[id];
             if (!opl.empty()) {
                 auto &ll = opl.cbegin()->second;
@@ -51,13 +59,13 @@ public:
         TopOfBooksRAII(OrderBook &orderBook, SymbolId id) :
                 book(orderBook),
                 id(id) {
-            preBuyTop = this->top(book.buyOrdersBySymbol, id);
-            preSellTop = this->top(book.sellOrdersBySymbol, id);
+            preBuyTop = this->top(book.buyOrdersBySymbol);
+            preSellTop = this->top(book.sellOrdersBySymbol);
         }
 
         ~TopOfBooksRAII() {
-            postBuyTop = this->top(book.buyOrdersBySymbol, id);
-            postSellTop = this->top(book.buyOrdersBySymbol, id);
+            postBuyTop = this->top(book.buyOrdersBySymbol);
+            postSellTop = this->top(book.buyOrdersBySymbol);
 
             if (preBuyTop != postBuyTop) {
                 book._observer.onEvent(platform::TopOfBook('B', postBuyTop));
